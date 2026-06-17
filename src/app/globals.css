@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* UBFSF Brand Colors */
+  --ubfsf-gold: #FFB81C;
+  --ubfsf-black: #000000;
+  --ubfsf-white: #ffffff;
+  --ubfsf-gray: #1a1a1a;
+
+  /* Next.js Defaults mapped to Brand */
+  --background: var(--ubfsf-white);
+  --foreground: var(--ubfsf-black);
+  
+  /* Typography from old site */
+  --font-primary: "Open Sans", sans-serif;
+  --font-secondary: "Montserrat", sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* This makes these colors available as classes like 'bg-brand-gold' or 'text-brand-black' */
+  --color-brand-gold: var(--ubfsf-gold);
+  --color-brand-black: var(--ubfsf-black);
+  --color-brand-gray: var(--ubfsf-gray);
+  
+  --font-sans: var(--font-primary);
+  --font-mono: var(--font-secondary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Global Styles to keep everything consistent */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Old UBFSF Heading Style */
+h1, h2, h3, h4 {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ubfsf-black);
+}
+
+/* Button Consistency */
+.ubfsf-button {
+  background-color: var(--ubfsf-gold);
+  color: var(--ubfsf-black);
+  padding: 12px 24px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.ubfsf-button:hover {
+  opacity: 0.9;
 }
