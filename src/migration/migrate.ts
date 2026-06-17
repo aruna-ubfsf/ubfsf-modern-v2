@@ -20,7 +20,7 @@ function executeTransformationPipeline() {
     
     // Regular Expression: Target opening and closing Divi shortcode brackets
     let cleanBio = rawContent.replace(/\[\/?et_pb.*?\]/g, "");
-    // Regular Expression: Target leftover raw layout HTML tag structures
+    // Regular Expression: Target leftover HTML paragraph tag structures
     cleanBio = cleanBio.replace(/<\/?[^>]+(>|$)/g, "").trim();
     
     // Regular Expression: Isolate the source asset URI from the profile image tag
