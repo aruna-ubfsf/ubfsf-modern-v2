@@ -1,59 +1,58 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-:root {
-  /* UBFSF Brand Colors */
-  --ubfsf-gold: #FFB81C;
-  --ubfsf-black: #000000;
-  --ubfsf-white: #ffffff;
-  --ubfsf-gray: #1a1a1a;
-
-  /* Next.js Defaults mapped to Brand */
-  --background: var(--ubfsf-white);
-  --foreground: var(--ubfsf-black);
-  
-  /* Typography from old site */
-  --font-primary: "Open Sans", sans-serif;
-  --font-secondary: "Montserrat", sans-serif;
+@theme {
+  --color-ubfsf-gold: #D4A017;
+  --color-ubfsf-zinc: #1A1A1A;
+  --font-sans: "Open Sans", ui-sans-serif, system-ui;
 }
 
-@theme inline {
-  /* This makes these colors available as classes like 'bg-brand-gold' or 'text-brand-black' */
-  --color-brand-gold: var(--ubfsf-gold);
-  --color-brand-black: var(--ubfsf-black);
-  --color-brand-gray: var(--ubfsf-gray);
-  
-  --font-sans: var(--font-primary);
-  --font-mono: var(--font-secondary);
+@layer base {
+  :root {
+    /* LIGHT THEME */
+    --background: #ffffff;
+    --foreground: #09090b;
+    --muted: #71717a;
+    --border: #e4e4e7;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* DARK THEME (Automatic) */
+      --background: #09090b;
+      --foreground: #fafafa;
+      --muted: #a1a1aa;
+      --border: #27272a;
+    }
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
 }
 
-/* Global Styles to keep everything consistent */
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+/* 
+  WORDPRESS CONTENT BRIDGE 
+  This ensures the book description text is readable in both modes.
+*/
+.prose {
+  @apply max-w-none;
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-links: var(--color-ubfsf-gold);
+  --tw-prose-bold: var(--foreground);
 }
 
-/* Old UBFSF Heading Style */
-h1, h2, h3, h4 {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--ubfsf-black);
+@media (prefers-color-scheme: dark) {
+  .prose {
+    @apply prose-invert;
+  }
 }
 
-/* Button Consistency */
-.ubfsf-button {
-  background-color: var(--ubfsf-gold);
-  color: var(--ubfsf-black);
-  padding: 12px 24px;
-  font-weight: 700;
-  text-transform: uppercase;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.ubfsf-button:hover {
-  opacity: 0.9;
+.prose img {
+  @apply rounded-xl shadow-2xl border border-[var(--border)] my-12;
 }

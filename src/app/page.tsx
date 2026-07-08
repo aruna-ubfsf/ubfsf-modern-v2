@@ -1,50 +1,48 @@
-import Link from "next/link";
-import { getHeadlessPageBySlug } from "@/lib/wordpress";
+import { getPosts, getPageBySlug } from '@/lib/wordpress';
+import Link from 'next/link';
 
 export default async function HomePage() {
-  // Pull live layout arrays directly from the Headless CMS
-  const pageData = await getHeadlessPageBySlug("home");
-
+  // Fetching the refactored data from the live API
+  const posts = await getPosts(6);
+  
   return (
-    <div className="max-w-4xl mx-auto px-4 py-16 flex flex-col items-center">
-      <span className="text-xs font-bold tracking-widest text-brand-gold uppercase bg-brand-black text-white px-3 py-1 rounded mb-6">
-        Platform Launch Matrix
-      </span>
-
-      {/* Renders your live official title text directly */}
-      <h1 className="text-4xl md:text-6xl font-black tracking-tight text-brand-black text-center mb-6 uppercase">
-        {pageData?.title || "United Black Family Scholarship Foundation"}
-      </h1>
-
-      {/* Native Server Insertion: Outputs your layout copy directly while keeping standard styling */}
-      {pageData?.content ? (
-        <div 
-          className="prose prose-slate max-w-xl mx-auto text-center text-slate-600 mb-10 font-sans normal-case leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: pageData.content }}
-        />
-      ) : (
-        <p className="text-slate-600 text-lg max-w-xl mx-auto mb-10 text-center leading-relaxed font-sans normal-case">
-          Welcome to the modernized media archive pipeline. Access verified high-fidelity assets, 
-          contributor matrix lookups, and edge-cached streaming audio data natively.
+    <main className="min-h-screen bg-white dark:bg-zinc-950 transition-colors">
+      <section className="py-32 px-6 text-center border-b border-zinc-100 dark:border-zinc-900">
+        <h1 className="text-6xl md:text-9xl font-black uppercase tracking-tighter leading-[0.8] text-[var(--foreground)]">
+          Rebuilding <br /> <span className="text-ubfsf-gold">Community</span>
+        </h1>
+        <p className="mt-10 text-zinc-500 max-w-xl mx-auto font-medium uppercase tracking-widest text-[10px]">
+          United Black Family Scholarship Foundation — Established 2014
         </p>
-      )}
+      </section>
 
-      <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
-        <Link 
-          href="/contributors" 
-          className="w-full sm:w-auto text-center px-8 py-4 bg-brand-black text-white font-bold rounded-xl tracking-wide shadow-lg hover:bg-brand-gray transition-all uppercase text-sm"
-        >
-          Enter Media Matrix
-        </Link>
-        <a 
-          href="https://ubfsf.org/" 
-          target="_blank" 
-          rel="noreferrer"
-          className="w-full sm:w-auto text-center px-8 py-4 bg-white text-brand-black border-2 border-brand-black font-bold rounded-xl tracking-wide hover:bg-slate-50 transition-all uppercase text-sm"
-        >
-          Official Portal
-        </a>
-      </div>
-    </div>
+      <section className="max-w-7xl mx-auto py-24 px-8">
+        <div className="flex items-center justify-between mb-16">
+          <h2 className="text-4xl font-black uppercase tracking-tighter">Latest Updates</h2>
+          <Link href="/blog" className="text-[10px] font-black uppercase tracking-widest text-ubfsf-gold border-b-2 border-ubfsf-gold">
+            View All News
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {posts.map((post) => (
+            <Link key={post.id} href={`/blog/${post.slug}`} className="group">
+              <article className="h-full flex flex-col border-t border-zinc-100 dark:border-zinc-800 pt-8 hover:border-ubfsf-gold transition-all">
+                <time className="text-ubfsf-gold text-[10px] font-bold uppercase mb-4">
+                  {new Date(post.date).toLocaleDateString()}
+                </time>
+                <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight mb-4 group-hover:text-ubfsf-gold transition-colors">
+                  {post.title}
+                </h3>
+                <div 
+                  className="text-zinc-500 dark:text-zinc-400 text-sm line-clamp-3" 
+                  dangerouslySetInnerHTML={{ __html: post.excerpt }} 
+                />
+              </article>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }

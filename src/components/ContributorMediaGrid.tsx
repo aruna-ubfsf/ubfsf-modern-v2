@@ -1,95 +1,29 @@
-'use client';
-import React, { useState, useMemo } from 'react';
+import { WordPressMediaAsset } from "@/lib/wordpress";
 
-interface MediaAsset {
-  id: number;
-  title: string;
-  sourceUrl: string;
-  mediaType: string;
-  mimeType: string;
+interface Props {
+  initialAssets: WordPressMediaAsset[];
 }
 
-export default function ContributorMediaGrid({ initialAssets }: { initialAssets: MediaAsset[] }) {
-  const [activeAudio, setActiveAudio] = useState<string | null>(null);
-
-  // Algorithmic O(N) single-pass partition map
-  const { headshots, audioMap } = useMemo(() => {
-    const headshotsList: MediaAsset[] = [];
-    const audioLookup = new Map<string, string>();
-    const rawAudioList: string[] = [];
-
-    for (let i = 0; i < initialAssets.length; i++) {
-      const asset = initialAssets[i];
-      if (asset.mediaType === 'image') {
-        headshotsList.push(asset);
-      } else if (asset.mimeType.includes('audio') || asset.sourceUrl.endsWith('.m4a') || asset.sourceUrl.endsWith('.mp3')) {
-        rawAudioList.push(asset.sourceUrl);
-      }
-    }
-
-    headshotsList.forEach((headshot, index) => {
-      const fallbackAudio = rawAudioList[index % rawAudioList.length] || '';
-      audioLookup.set(headshot.id.toString(), fallbackAudio);
-    });
-
-    return { headshots: headshotsList, audioMap: audioLookup };
-  }, [initialAssets]);
+export default function ContributorMediaGrid({ initialAssets }: Props) {
+  if (!initialAssets || initialAssets.length === 0) {
+    return <div className="p-10 text-center text-zinc-400">No media assets found in the matrix.</div>;
+  }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 font-sans selection:bg-brand-gold/30">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-brand-black tracking-tight">
-          Contributor Matrix
-        </h1>
-        <p className="text-brand-black/70 mt-2 text-md font-medium normal-case">
-          Unified Black Family Scholarship Foundation Media Portal
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {headshots.slice(0, 12).map((img) => {
-          const soundTrackUrl = audioMap.get(img.id.toString());
-          
-          return (
-            <div key={img.id} className="bg-white rounded-2xl shadow-md border border-slate-100 p-6 flex flex-col items-center text-center transition-all hover:shadow-xl hover:-translate-y-1 duration-200">
-              <img 
-                src={img.sourceUrl} 
-                alt={img.title} 
-                className="w-32 h-32 rounded-full object-cover bg-slate-50 shadow-inner mb-4 border-2 border-brand-gold/20" 
-                loading="lazy"
-              />
-              <h3 className="font-bold text-lg text-brand-black capitalize tracking-normal">
-                {img.title.replace(/[-_]/g, ' ')}
-              </h3>
-              <span className="text-xs font-bold tracking-wider text-brand-gold uppercase mt-1">
-                Verified Member
-              </span>
-              
-              {soundTrackUrl && (
-                <button 
-                  onClick={() => setActiveAudio(activeAudio === soundTrackUrl ? null : soundTrackUrl)}
-                  className={`mt-6 w-full py-2.5 rounded-xl font-medium text-sm tracking-wide transition-all duration-150 ${
-                    activeAudio === soundTrackUrl 
-                      ? 'bg-red-600 text-white shadow-lg shadow-red-100' 
-                      : 'bg-brand-black text-white hover:bg-brand-gold hover:text-brand-black'
-                  }`}
-                >
-                  {activeAudio === soundTrackUrl ? '⏸ Stop Stream' : '▶ Play Voice Data'}
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {activeAudio && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-brand-black text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-4 z-50 border border-brand-gray animate-in fade-in slide-in-from-bottom-4">
-          <span className="text-xs font-mono tracking-widest text-brand-gold animate-pulse font-bold">
-            LIVE NODE LINK
-          </span>
-          <audio src={activeAudio} autoPlay controls className="h-8 filter invert" />
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+      {initialAssets.map((asset) => (
+        <div key={asset.id} className="group relative aspect-video bg-zinc-100 rounded-2xl overflow-hidden border border-zinc-200">
+          <img 
+            src={asset.sourceUrl} 
+            alt={asset.title}
+            className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-6 flex flex-col justify-end">
+            <h3 className="text-white font-black uppercase text-sm tracking-widest">{asset.title}</h3>
+            <p className="text-[#FFB81C] text-[10px] font-mono mt-1">{asset.mimeType}</p>
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
