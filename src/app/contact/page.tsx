@@ -18,7 +18,6 @@ export default async function ContactPage() {
         />
         <div className="bg-zinc-50 dark:bg-zinc-900 p-10 border border-zinc-100 dark:border-zinc-800">
            <h3 className="font-black uppercase tracking-widest text-xs mb-8">Inquiry Form</h3>
-           <p className="text-zinc-500 text-sm">Form logic connected to Supabase pending.</p>
         </div>
       </section>
     </main>
