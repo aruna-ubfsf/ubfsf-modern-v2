@@ -3,9 +3,39 @@ import Link from "next/link";
 import { getPageBySlug } from "@/lib/wordpress/pages";
 import { getWpImageUrl } from "@/lib/wordpress/client";
 
+// Decode HTML entities that come from WordPress
+function decodeEntities(str: string): string {
+  return str
+    .replace(/&#8221;/g, '"')   // Right double quotation mark
+    .replace(/&#8243;/g, '"')   // Double prime (also used as quote)
+    .replace(/&#8217;/g, "'")   // Right single quotation mark
+    .replace(/&#8216;/g, "'")   // Left single quotation mark
+    .replace(/&#8211;/g, "–")   // En dash
+    .replace(/&#8212;/g, "—")   // Em dash
+    .replace(/&#038;/g, "&")    // Ampersand
+    .replace(/&#8220;/g, '"')   // Left double quotation mark
+    .replace(/&#8221;/g, '"')   // Right double quotation mark (already there but keeping for safety)
+    .replace(/&#8230;/g, "…")   // Ellipsis
+    .replace(/&#160;/g, " ")    // Non-breaking space
+    .replace(/&quot;/g, '"')    // Quotation mark
+    .replace(/&amp;/g, "&")     // Ampersand
+    .replace(/&lt;/g, "<")      // Less than
+    .replace(/&gt;/g, ">")      // Greater than
+    .replace(/&#39;/g, "'")     // Apostrophe
+    .replace(/&rsquo;/g, "'")   // Right single quote
+    .replace(/&lsquo;/g, "'")   // Left single quote
+    .replace(/&rdquo;/g, '"')   // Right double quote
+    .replace(/&ldquo;/g, '"')   // Left double quote
+    .replace(/&mdash;/g, "—")   // Em dash
+    .replace(/&ndash;/g, "–");  // En dash
+}
+
 // Helper function to clean HTML content and extract structured data
-function extractContentFromWordPress(content: string) {
-  // Extract the main text content
+function extractContentFromWordPress(rawContent: string) {
+  // Decode HTML entities first - THIS IS THE KEY FIX
+  const content = decodeEntities(rawContent);
+
+  // Extract the main text content from paragraph tags
   const textMatches = content.match(/<p>(.*?)<\/p>/g) || [];
   const textContent = textMatches
     .map(p => p.replace(/<[^>]+>/g, '').trim())
@@ -17,38 +47,37 @@ function extractContentFromWordPress(content: string) {
     .map(li => li.replace(/<[^>]+>/g, '').trim())
     .filter(Boolean);
 
-  // Extract headings/sections
-  const headingMatches = content.match(/<[^>]*heading[^>]*title_suffix="([^"]*)"[^>]*>/g) || [];
-  const sections = headingMatches
-    .map(h => {
-      const match = h.match(/title_suffix="([^"]*)"/);
-      return match ? match[1] : null;
-    })
-    .filter(Boolean);
+  // Extract headings/sections - now works with decoded quotes
+  const sections = [
+    ...content.matchAll(/title_suffix="([^"]+)"/g),
+  ].map(m => m[1]);
 
-  // Extract image URLs - properly filter out null/undefined
-  const imageMatches = content.match(/src="([^"]*\.(jpg|jpeg|png|webp))"/g) || [];
-  const imageUrls: string[] = [];
-  for (const img of imageMatches) {
-    const match = img.match(/src="([^"]*)"/);
-    if (match && match[1]) {
-      imageUrls.push(match[1]);
-    }
+  // Extract image URLs - now works with decoded quotes
+  const imageUrls = [
+    ...content.matchAll(/src="([^"]+\.(?:jpg|jpeg|png|webp))/gi),
+  ].map(m => m[1]);
+
+  // Extract video URL - works with decoded quotes
+  let videoUrl: string | null = null;
+  const videoMatch = content.match(
+    /src="https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\/)([^"?&]+)/i
+  );
+  if (videoMatch) {
+    videoUrl = `https://www.youtube.com/embed/${videoMatch[1]}`;
   }
 
-  // Extract video URL
-  const videoMatch = content.match(/src="(https:\/\/youtu\.be\/[^"]*)"/);
-  const videoUrl = videoMatch ? videoMatch[1] : null;
-
-  // Extract book information
+  // Extract book information - works with decoded quotes
   const bookTitles: string[] = [];
   const bookImages: string[] = [];
   
+  // Find all book sections (they have both title_suffix and src)
   const bookRegex = /title_suffix="([^"]*)"[^>]*>[\s\S]*?src="([^"]*\.(jpg|jpeg|png))"/g;
   let bookMatch;
   while ((bookMatch = bookRegex.exec(content)) !== null) {
-    if (bookMatch[1]) bookTitles.push(bookMatch[1]);
-    if (bookMatch[2]) bookImages.push(bookMatch[2]);
+    if (bookMatch[1] && bookMatch[2]) {
+      bookTitles.push(bookMatch[1]);
+      bookImages.push(bookMatch[2]);
+    }
   }
 
   return {
@@ -62,15 +91,6 @@ function extractContentFromWordPress(content: string) {
   };
 }
 
-// AI-generated placeholder images for when WordPress images aren't available
-const placeholderImages = {
-  hero: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1200&q=80",
-  bookshelf: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80",
-  writing: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80",
-  justice: "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=800&q=80",
-  community: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80",
-};
-
 export default async function HundredStoriesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const page = await getPageBySlug("hundred-stories-project");
@@ -82,6 +102,12 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   const content = page.content || '';
   const extracted = extractContentFromWordPress(content);
 
+  // Debug: log the extracted data to verify it's working
+  console.log('Extracted video URL:', extracted.videoUrl);
+  console.log('Extracted images:', extracted.imageUrls);
+  console.log('Extracted sections:', extracted.sections);
+  console.log('Extracted books:', extracted.bookTitles);
+
   // Organize extracted content into sections
   const heroTitle = page.title || "Hundred Stories Project";
   
@@ -92,26 +118,11 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   const keyComponents = extracted.listItems.slice(0, 3);
   const whyItMattersItems = extracted.listItems.slice(3, 6);
 
-  // Get the first image URL safely
-  const firstImageUrl = extracted.imageUrls.length > 0 ? extracted.imageUrls[0] : null;
-
-  // Get book data with fallback images
+  // Get book data
   const books = [
-    { 
-      title: extracted.bookTitles[0] || 'No Rhyme or Reason', 
-      img: extracted.bookImages[0] || null,
-      fallback: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"
-    },
-    { 
-      title: extracted.bookTitles[1] || 'Social Justice Autobiographies', 
-      img: extracted.bookImages[1] || null,
-      fallback: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&q=80"
-    },
-    { 
-      title: extracted.bookTitles[2] || 'Kill the Bastard', 
-      img: extracted.bookImages[2] || null,
-      fallback: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=400&q=80"
-    }
+    { title: extracted.bookTitles[0] || 'No Rhyme or Reason', img: extracted.bookImages[0] || '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg' },
+    { title: extracted.bookTitles[1] || 'Social Justice Autobiographies', img: extracted.bookImages[1] || '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg' },
+    { title: extracted.bookTitles[2] || 'Kill the Bastard', img: extracted.bookImages[2] || '/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg' }
   ];
 
   // Three pillars data
@@ -119,49 +130,26 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
     {
       icon: "✍️",
       title: "Write",
-      description: "Empowering incarcerated individuals to share their stories through a self-taught writing curriculum.",
-      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80"
+      description: "Empowering incarcerated individuals to share their stories through a self-taught writing curriculum."
     },
     {
       icon: "📚",
       title: "Publish",
-      description: "Transforming personal narratives into published manuscripts and anthologies that reach the world.",
-      image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80"
+      description: "Transforming personal narratives into published manuscripts and anthologies that reach the world."
     },
     {
       icon: "🌍",
       title: "Transform",
-      description: "Changing perspectives and inspiring solutions to systemic issues in the carceral ecosystem.",
-      image: "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80"
+      description: "Changing perspectives and inspiring solutions to systemic issues in the carceral ecosystem."
     }
   ];
-
-  // Safe function to get image URL
-  function getImageUrl(imagePath: string | null | undefined, fallback: string): string {
-    if (!imagePath) return fallback;
-    try {
-      const url = getWpImageUrl(imagePath);
-      return url || fallback;
-    } catch {
-      return fallback;
-    }
-  }
 
   return (
     <main className="bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] min-h-screen font-serif">
       
       {/* HERO SECTION */}
-      <section className="relative bg-black dark:bg-[#0a0a0a] text-white py-24 md:py-32 px-6 md:px-20 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <Image 
-            src={placeholderImages.hero}
-            alt="Background"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-        <div className="relative max-w-5xl mx-auto text-center">
+      <section className="relative bg-black dark:bg-[#0a0a0a] text-white py-24 md:py-32 px-6 md:px-20">
+        <div className="max-w-5xl mx-auto text-center">
           <h1 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-6 leading-[1.1]">
             {heroTitle}
           </h1>
@@ -207,13 +195,15 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
             )}
           </div>
           <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden shadow-xl">
-            <Image 
-              src={getImageUrl(firstImageUrl, placeholderImages.bookshelf)} 
-              alt="Hundred Stories Bookshelf" 
-              fill 
-              className="object-cover hover:scale-105 transition-transform duration-700" 
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
+            {extracted.imageUrls.length > 0 && (
+              <Image 
+                src={getWpImageUrl(extracted.imageUrls[0])} 
+                alt="Hundred Stories Bookshelf" 
+                fill 
+                className="object-cover hover:scale-105 transition-transform duration-700" 
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            )}
           </div>
         </section>
 
@@ -229,24 +219,13 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
             {pillars.map((pillar, index) => (
               <div 
                 key={index} 
-                className="group bg-white dark:bg-[#1a1a1a] rounded-lg overflow-hidden border border-stone-200 dark:border-stone-800 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+                className="bg-stone-50 dark:bg-[#222222] p-8 text-center border border-stone-200 dark:border-stone-800 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={pillar.image}
-                    alt={pillar.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                  <div className="absolute bottom-4 left-4 text-4xl">{pillar.icon}</div>
-                </div>
-                <div className="p-6 text-center">
-                  <h3 className="text-xl font-bold mb-3 text-black dark:text-white">{pillar.title}</h3>
-                  <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
-                    {pillar.description}
-                  </p>
-                </div>
+                <div className="text-5xl mb-4">{pillar.icon}</div>
+                <h3 className="text-xl font-bold mb-3 text-black dark:text-white">{pillar.title}</h3>
+                <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+                  {pillar.description}
+                </p>
               </div>
             ))}
           </div>
@@ -271,27 +250,22 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
           <div className="relative aspect-video w-full bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden shadow-xl order-1 md:order-2">
             {extracted.videoUrl ? (
               <iframe
-                src={extracted.videoUrl.replace('youtu.be/', 'www.youtube.com/embed/')}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                src={extracted.videoUrl}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
+                loading="lazy"
+                title="Hundred Stories Project Video"
               />
             ) : (
-              <div className="w-full h-full relative">
-                <Image
-                  src={placeholderImages.writing}
-                  alt="Video placeholder - Storytelling"
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="w-20 h-20 rounded-full bg-[#FFB81C]/80 flex items-center justify-center mx-auto mb-4">
-                      <span className="text-4xl">▶</span>
-                    </div>
-                    <p className="text-sm font-light">Watch the Story</p>
-                  </div>
+              <div className="w-full h-full flex flex-col items-center justify-center bg-stone-200 dark:bg-[#333333]">
+                <div className="w-20 h-20 rounded-full bg-[#FFB81C]/20 flex items-center justify-center mb-4">
+                  <svg className="w-10 h-10 text-[#FFB81C]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
                 </div>
+                <p className="text-stone-500 dark:text-stone-400 font-medium">Video Coming Soon</p>
+                <p className="text-sm text-stone-400 dark:text-stone-500 mt-1">Watch this space for updates</p>
               </div>
             )}
           </div>
@@ -316,7 +290,7 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
               >
                 <div className="relative aspect-[2/3] bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden">
                   <Image 
-                    src={getImageUrl(book.img, book.fallback)} 
+                    src={getWpImageUrl(book.img)} 
                     alt={book.title} 
                     fill 
                     className="object-cover group-hover:scale-105 transition-transform duration-700" 
