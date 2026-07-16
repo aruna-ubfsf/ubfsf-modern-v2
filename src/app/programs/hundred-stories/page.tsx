@@ -26,24 +26,23 @@ function extractContentFromWordPress(content: string) {
     })
     .filter(Boolean);
 
-  // Extract image URLs
+  // Extract image URLs - filter out null/undefined
   const imageMatches = content.match(/src="([^"]*\.(jpg|jpeg|png|webp))"/g) || [];
   const imageUrls = imageMatches
     .map(img => {
       const match = img.match(/src="([^"]*)"/);
       return match ? match[1] : null;
     })
-    .filter(Boolean);
+    .filter((url): url is string => url !== null && url !== undefined);
 
   // Extract video URL
   const videoMatch = content.match(/src="(https:\/\/youtu\.be\/[^"]*)"/);
   const videoUrl = videoMatch ? videoMatch[1] : null;
 
-  // Extract book information - Fix: Remove the 's' flag
+  // Extract book information
   const bookTitles: string[] = [];
   const bookImages: string[] = [];
   
-  // Use a more compatible regex approach
   const bookRegex = /title_suffix="([^"]*)"[^>]*>[\s\S]*?src="([^"]*\.(jpg|jpeg|png))"/g;
   let bookMatch;
   while ((bookMatch = bookRegex.exec(content)) !== null) {
@@ -62,6 +61,15 @@ function extractContentFromWordPress(content: string) {
   };
 }
 
+// AI-generated placeholder images for when WordPress images aren't available
+const placeholderImages = {
+  hero: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1200&q=80", // Books
+  bookshelf: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80", // Library
+  writing: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80", // Writing
+  justice: "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=800&q=80", // Justice
+  community: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80", // Community
+};
+
 export default async function HundredStoriesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const page = await getPageBySlug("hundred-stories-project");
@@ -76,29 +84,31 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   // Organize extracted content into sections
   const heroTitle = page.title || "Hundred Stories Project";
   
-  // Get the main description (first paragraph)
+  // Get the main description
   const mainDescription = extracted.textContent[0] || "";
-  
-  // Get the "Giving Voice to the Voiceless" section content
   const givingVoiceContent = extracted.textContent.slice(1, 3).join(" ");
-  
-  // Get the "Expanding Perspectives" section content
   const expandingPerspectivesContent = extracted.textContent.slice(3, 5).join(" ");
-  
-  // Get the "Why This Project Matters" content
   const whyItMattersContent = extracted.textContent.slice(5, 8).join(" ");
-  
-  // Get key components from list items
   const keyComponents = extracted.listItems.slice(0, 3);
-  
-  // Get why it matters list items
   const whyItMattersItems = extracted.listItems.slice(3, 6);
 
-  // Get book data - use extracted book titles and images
+  // Get book data with fallback images
   const books = [
-    { title: extracted.bookTitles[0] || 'No Rhyme or Reason', img: extracted.bookImages[0] || '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg' },
-    { title: extracted.bookTitles[1] || 'Social Justice Autobiographies', img: extracted.bookImages[1] || '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg' },
-    { title: extracted.bookTitles[2] || 'Kill the Bastard', img: extracted.bookImages[2] || '/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg' }
+    { 
+      title: extracted.bookTitles[0] || 'No Rhyme or Reason', 
+      img: extracted.bookImages[0] || '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg',
+      fallback: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"
+    },
+    { 
+      title: extracted.bookTitles[1] || 'Social Justice Autobiographies', 
+      img: extracted.bookImages[1] || '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg',
+      fallback: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&q=80"
+    },
+    { 
+      title: extracted.bookTitles[2] || 'Kill the Bastard', 
+      img: extracted.bookImages[2] || '/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg',
+      fallback: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=400&q=80"
+    }
   ];
 
   // Three pillars data
@@ -106,26 +116,51 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
     {
       icon: "✍️",
       title: "Write",
-      description: "Empowering incarcerated individuals to share their stories through a self-taught writing curriculum."
+      description: "Empowering incarcerated individuals to share their stories through a self-taught writing curriculum.",
+      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80"
     },
     {
       icon: "📚",
       title: "Publish",
-      description: "Transforming personal narratives into published manuscripts and anthologies that reach the world."
+      description: "Transforming personal narratives into published manuscripts and anthologies that reach the world.",
+      image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80"
     },
     {
       icon: "🌍",
       title: "Transform",
-      description: "Changing perspectives and inspiring solutions to systemic issues in the carceral ecosystem."
+      description: "Changing perspectives and inspiring solutions to systemic issues in the carceral ecosystem.",
+      image: "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80"
     }
   ];
+
+  // Safe image URL helper
+  const getSafeImageUrl = (url: string | null | undefined, fallback: string) => {
+    if (url && url.startsWith('http')) {
+      return url;
+    }
+    try {
+      const wpUrl = getWpImageUrl(url || '');
+      return wpUrl || fallback;
+    } catch {
+      return fallback;
+    }
+  };
 
   return (
     <main className="bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] min-h-screen font-serif">
       
-      {/* HERO SECTION - Full width with gradient or solid background */}
-      <section className="relative bg-black dark:bg-[#0a0a0a] text-white py-24 md:py-32 px-6 md:px-20">
-        <div className="max-w-5xl mx-auto text-center">
+      {/* HERO SECTION */}
+      <section className="relative bg-black dark:bg-[#0a0a0a] text-white py-24 md:py-32 px-6 md:px-20 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <Image 
+            src={placeholderImages.hero}
+            alt="Background"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+        <div className="relative max-w-5xl mx-auto text-center">
           <h1 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-6 leading-[1.1]">
             {heroTitle}
           </h1>
@@ -171,15 +206,17 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
             )}
           </div>
           <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden shadow-xl">
-            {extracted.imageUrls.length > 0 && (
-              <Image 
-                src={getWpImageUrl(extracted.imageUrls[0])} 
-                alt="Hundred Stories Bookshelf" 
-                fill 
-                className="object-cover hover:scale-105 transition-transform duration-700" 
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            )}
+            <Image 
+              src={getSafeImageUrl(extracted.imageUrls[0], placeholderImages.bookshelf)} 
+              alt="Hundred Stories Bookshelf" 
+              fill 
+              className="object-cover hover:scale-105 transition-transform duration-700" 
+              sizes="(max-width: 768px) 100vw, 50vw"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = placeholderImages.bookshelf;
+              }}
+            />
           </div>
         </section>
 
@@ -195,13 +232,24 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
             {pillars.map((pillar, index) => (
               <div 
                 key={index} 
-                className="bg-stone-50 dark:bg-[#222222] p-8 text-center border border-stone-200 dark:border-stone-800 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group bg-white dark:bg-[#1a1a1a] rounded-lg overflow-hidden border border-stone-200 dark:border-stone-800 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
               >
-                <div className="text-5xl mb-4">{pillar.icon}</div>
-                <h3 className="text-xl font-bold mb-3 text-black dark:text-white">{pillar.title}</h3>
-                <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
-                  {pillar.description}
-                </p>
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={pillar.image}
+                    alt={pillar.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 text-4xl">{pillar.icon}</div>
+                </div>
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-bold mb-3 text-black dark:text-white">{pillar.title}</h3>
+                  <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+                    {pillar.description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -232,8 +280,21 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
                 allowFullScreen
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <p className="text-stone-500 dark:text-stone-400">Video Coming Soon</p>
+              <div className="w-full h-full relative">
+                <Image
+                  src={placeholderImages.writing}
+                  alt="Video placeholder - Storytelling"
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <div className="w-20 h-20 rounded-full bg-[#FFB81C]/80 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-4xl">▶</span>
+                    </div>
+                    <p className="text-sm font-light">Watch the Story</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -258,11 +319,15 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
               >
                 <div className="relative aspect-[2/3] bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden">
                   <Image 
-                    src={getWpImageUrl(book.img)} 
+                    src={getSafeImageUrl(book.img, book.fallback)} 
                     alt={book.title} 
                     fill 
                     className="object-cover group-hover:scale-105 transition-transform duration-700" 
                     sizes="(max-width: 768px) 100vw, 33vw"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = book.fallback;
+                    }}
                   />
                 </div>
                 <div className="p-6">
