@@ -26,14 +26,15 @@ function extractContentFromWordPress(content: string) {
     })
     .filter(Boolean);
 
-  // Extract image URLs - filter out null/undefined
+  // Extract image URLs - properly filter out null/undefined
   const imageMatches = content.match(/src="([^"]*\.(jpg|jpeg|png|webp))"/g) || [];
-  const imageUrls = imageMatches
-    .map(img => {
-      const match = img.match(/src="([^"]*)"/);
-      return match ? match[1] : null;
-    })
-    .filter((url): url is string => url !== null && url !== undefined);
+  const imageUrls: string[] = [];
+  for (const img of imageMatches) {
+    const match = img.match(/src="([^"]*)"/);
+    if (match && match[1]) {
+      imageUrls.push(match[1]);
+    }
+  }
 
   // Extract video URL
   const videoMatch = content.match(/src="(https:\/\/youtu\.be\/[^"]*)"/);
@@ -46,8 +47,8 @@ function extractContentFromWordPress(content: string) {
   const bookRegex = /title_suffix="([^"]*)"[^>]*>[\s\S]*?src="([^"]*\.(jpg|jpeg|png))"/g;
   let bookMatch;
   while ((bookMatch = bookRegex.exec(content)) !== null) {
-    bookTitles.push(bookMatch[1]);
-    bookImages.push(bookMatch[2]);
+    if (bookMatch[1]) bookTitles.push(bookMatch[1]);
+    if (bookMatch[2]) bookImages.push(bookMatch[2]);
   }
 
   return {
@@ -63,11 +64,11 @@ function extractContentFromWordPress(content: string) {
 
 // AI-generated placeholder images for when WordPress images aren't available
 const placeholderImages = {
-  hero: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1200&q=80", // Books
-  bookshelf: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80", // Library
-  writing: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80", // Writing
-  justice: "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=800&q=80", // Justice
-  community: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80", // Community
+  hero: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1200&q=80",
+  bookshelf: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80",
+  writing: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80",
+  justice: "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=800&q=80",
+  community: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80",
 };
 
 export default async function HundredStoriesPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -84,7 +85,6 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   // Organize extracted content into sections
   const heroTitle = page.title || "Hundred Stories Project";
   
-  // Get the main description
   const mainDescription = extracted.textContent[0] || "";
   const givingVoiceContent = extracted.textContent.slice(1, 3).join(" ");
   const expandingPerspectivesContent = extracted.textContent.slice(3, 5).join(" ");
@@ -92,21 +92,24 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   const keyComponents = extracted.listItems.slice(0, 3);
   const whyItMattersItems = extracted.listItems.slice(3, 6);
 
+  // Get the first image URL safely
+  const firstImageUrl = extracted.imageUrls.length > 0 ? extracted.imageUrls[0] : null;
+
   // Get book data with fallback images
   const books = [
     { 
       title: extracted.bookTitles[0] || 'No Rhyme or Reason', 
-      img: extracted.bookImages[0] || '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg',
+      img: extracted.bookImages[0] || null,
       fallback: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"
     },
     { 
       title: extracted.bookTitles[1] || 'Social Justice Autobiographies', 
-      img: extracted.bookImages[1] || '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg',
+      img: extracted.bookImages[1] || null,
       fallback: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&q=80"
     },
     { 
       title: extracted.bookTitles[2] || 'Kill the Bastard', 
-      img: extracted.bookImages[2] || '/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg',
+      img: extracted.bookImages[2] || null,
       fallback: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=400&q=80"
     }
   ];
@@ -133,18 +136,16 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
     }
   ];
 
-  // Safe image URL helper
-  const getSafeImageUrl = (url: string | null | undefined, fallback: string) => {
-    if (url && url.startsWith('http')) {
-      return url;
-    }
+  // Safe function to get image URL
+  function getImageUrl(imagePath: string | null | undefined, fallback: string): string {
+    if (!imagePath) return fallback;
     try {
-      const wpUrl = getWpImageUrl(url || '');
-      return wpUrl || fallback;
+      const url = getWpImageUrl(imagePath);
+      return url || fallback;
     } catch {
       return fallback;
     }
-  };
+  }
 
   return (
     <main className="bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] min-h-screen font-serif">
@@ -207,15 +208,11 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
           </div>
           <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden shadow-xl">
             <Image 
-              src={getSafeImageUrl(extracted.imageUrls[0], placeholderImages.bookshelf)} 
+              src={getImageUrl(firstImageUrl, placeholderImages.bookshelf)} 
               alt="Hundred Stories Bookshelf" 
               fill 
               className="object-cover hover:scale-105 transition-transform duration-700" 
               sizes="(max-width: 768px) 100vw, 50vw"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = placeholderImages.bookshelf;
-              }}
             />
           </div>
         </section>
@@ -319,15 +316,11 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
               >
                 <div className="relative aspect-[2/3] bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden">
                   <Image 
-                    src={getSafeImageUrl(book.img, book.fallback)} 
+                    src={getImageUrl(book.img, book.fallback)} 
                     alt={book.title} 
                     fill 
                     className="object-cover group-hover:scale-105 transition-transform duration-700" 
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = book.fallback;
-                    }}
                   />
                 </div>
                 <div className="p-6">
