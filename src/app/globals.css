@@ -9,8 +9,8 @@
 }
 
 @layer base {
+  /* LIGHT THEME (default) */
   :root {
-    /* LIGHT THEME */
     --background: #ffffff;
     --foreground: #09090b;
     --muted: #71717a;
@@ -18,17 +18,47 @@
     --card-bg: #f9f9f9;
     --selection-bg: #D4A017;
     --selection-text: #000000;
+    
+    /* Text colors for light mode */
+    --text-primary: #09090b;
+    --text-secondary: #3f3f46;
+    --text-muted: #71717a;
+    --text-subtle: #a1a1aa;
+    --text-inverse: #ffffff;
+    
+    /* Background variants */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9f9f9;
+    --bg-card: #f1f1f1;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      /* DARK THEME (Automatic) */
-      --background: #09090b;
-      --foreground: #fafafa;
-      --muted: #a1a1aa;
-      --border: #1a1a1a;
-      --card-bg: #111113;
-    }
+  /* DARK THEME (when .dark class is applied) */
+  .dark {
+    --background: #1a1a1a;
+    --foreground: #fafafa;
+    --muted: #a1a1aa;
+    --border: #2a2a2a;
+    --card-bg: #222222;
+    --selection-bg: #D4A017;
+    --selection-text: #000000;
+    
+    /* Text colors for dark mode */
+    --text-primary: #fafafa;
+    --text-secondary: #d4d4d8;
+    --text-muted: #a1a1aa;
+    --text-subtle: #71717a;
+    --text-inverse: #09090b;
+    
+    /* Background variants */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #222222;
+    --bg-card: #2a2a2a;
+  }
+
+  /* Base HTML styles */
+  html {
+    background-color: var(--background);
+    color: var(--foreground);
   }
 
   body {
@@ -36,6 +66,7 @@
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
@@ -45,53 +76,253 @@
     color: var(--selection-text);
   }
 
-  h1, h2, h3, h4 {
-    @apply font-black uppercase tracking-tighter leading-[0.9];
+  /* All headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    line-height: 0.9;
     color: var(--foreground);
+    transition: color 0.3s ease;
+  }
+
+  /* All text elements */
+  p, span, li, div, label, input, textarea, button {
+    color: var(--foreground);
+    transition: color 0.3s ease;
+  }
+
+  /* Links */
+  a {
+    color: var(--foreground);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  a:hover {
+    color: #D4A017;
+  }
+
+  /* Input fields */
+  input, textarea, select {
+    background-color: var(--card-bg);
+    border-color: var(--border);
+    color: var(--foreground);
+  }
+
+  /* Utility classes using CSS variables */
+  .bg-primary {
+    background-color: var(--bg-primary);
+  }
+
+  .bg-secondary {
+    background-color: var(--bg-secondary);
+  }
+
+  .bg-card {
+    background-color: var(--bg-card);
+  }
+
+  .text-primary {
+    color: var(--text-primary);
+  }
+
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+
+  .text-muted {
+    color: var(--text-muted);
+  }
+
+  .text-subtle {
+    color: var(--text-subtle);
+  }
+
+  .border-subtle {
+    border-color: var(--border);
+  }
+
+  .border-card {
+    border-color: var(--border);
+  }
+
+  /* Hero section specific (always white text on dark) */
+  .hero-text {
+    color: #ffffff;
+  }
+
+  .hero-text-muted {
+    color: #d4d4d8;
+  }
+
+  /* Dark overlay for hero sections */
+  .hero-overlay {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
   }
 }
 
 /* 
-  WORDPRESS CONTENT BRIDGE (Senior Editorial Layout)
+  WORDPRESS CONTENT BRIDGE
   This maps raw HTML strings to a high-end magazine aesthetic.
 */
 .prose {
-  @apply max-w-none;
+  max-width: none;
   --tw-prose-body: var(--foreground);
   --tw-prose-headings: var(--foreground);
-  --tw-prose-links: var(--color-ubfsf-gold);
+  --tw-prose-links: #D4A017;
   --tw-prose-bold: var(--foreground);
-  --tw-prose-counters: var(--color-ubfsf-gold);
-  --tw-prose-bullets: var(--color-ubfsf-gold);
+  --tw-prose-counters: #D4A017;
+  --tw-prose-bullets: #D4A017;
+  --tw-prose-quote-borders: #D4A017;
 }
 
-@media (prefers-color-scheme: dark) {
-  .prose {
-    @apply prose-invert;
-  }
+/* Dark mode prose */
+.dark .prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-quote-borders: #D4A017;
 }
 
 /* Magazine "Lead" Paragraph styling */
 .prose > p:first-of-type {
-  @apply text-xl md:text-2xl font-medium leading-relaxed text-zinc-500 dark:text-zinc-400 mb-12;
+  font-size: 1.25rem;
+  line-height: 1.75;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+  .prose > p:first-of-type {
+    font-size: 1.5rem;
+  }
 }
 
 /* High-End Blockquote Styling */
 .prose blockquote {
-  @apply border-l-4 border-ubfsf-gold bg-zinc-50 dark:bg-zinc-900/50 p-8 italic font-serif text-2xl !not-italic shadow-sm;
+  border-left: 4px solid #D4A017;
+  background-color: var(--bg-secondary);
+  padding: 2rem;
+  font-style: italic;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-style: normal;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
 }
 
 /* Content Images */
 .prose img {
-  @apply rounded-2xl shadow-2xl border border-[var(--border)] my-16 hover:scale-[1.01] transition-transform duration-500;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  margin-top: 4rem;
+  margin-bottom: 4rem;
+  transition: transform 0.5s ease;
+}
+
+.prose img:hover {
+  transform: scale(1.01);
 }
 
 /* Clean Links */
 .prose a {
-  @apply no-underline font-bold border-b-2 border-transparent hover:border-ubfsf-gold transition-all pb-0.5;
+  text-decoration: none;
+  font-weight: 700;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  padding-bottom: 0.125rem;
+  color: #D4A017;
+}
+
+.prose a:hover {
+  border-bottom-color: #D4A017;
 }
 
 /* Fix for WordPress Video Embeds */
-.prose iframe, .prose video {
-  @apply w-full aspect-video rounded-xl shadow-2xl my-12 border border-[var(--border)];
+.prose iframe,
+.prose video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border);
+}
+
+/* List styling */
+.prose ul,
+.prose ol {
+  color: var(--foreground);
+}
+
+.prose li {
+  color: var(--foreground);
+}
+
+.prose li::marker {
+  color: #D4A017;
+}
+
+/* Code blocks */
+.prose pre {
+  background-color: var(--bg-secondary);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.prose code {
+  color: var(--foreground);
+  background-color: var(--bg-secondary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+}
+
+/* Tables */
+.prose table {
+  border-color: var(--border);
+}
+
+.prose th,
+.prose td {
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.prose thead {
+  background-color: var(--bg-secondary);
+}
+
+/* Horizontal rule */
+.prose hr {
+  border-color: var(--border);
+}
+
+/* Dark mode specific overrides */
+.dark .prose blockquote {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .prose pre {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .prose code {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Ensure proper contrast in dark mode */
+.dark .prose strong {
+  color: #ffffff;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4 {
+  color: #ffffff;
 }

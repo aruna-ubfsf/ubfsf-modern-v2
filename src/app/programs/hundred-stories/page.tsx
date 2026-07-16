@@ -6,58 +6,51 @@ import { getWpImageUrl } from "@/lib/wordpress/client";
 // Decode HTML entities that come from WordPress
 function decodeEntities(str: string): string {
   return str
-    .replace(/&#8221;/g, '"')   // Right double quotation mark
-    .replace(/&#8243;/g, '"')   // Double prime (also used as quote)
-    .replace(/&#8217;/g, "'")   // Right single quotation mark
-    .replace(/&#8216;/g, "'")   // Left single quotation mark
-    .replace(/&#8211;/g, "–")   // En dash
-    .replace(/&#8212;/g, "—")   // Em dash
-    .replace(/&#038;/g, "&")    // Ampersand
-    .replace(/&#8220;/g, '"')   // Left double quotation mark
-    .replace(/&#8221;/g, '"')   // Right double quotation mark (already there but keeping for safety)
-    .replace(/&#8230;/g, "…")   // Ellipsis
-    .replace(/&#160;/g, " ")    // Non-breaking space
-    .replace(/&quot;/g, '"')    // Quotation mark
-    .replace(/&amp;/g, "&")     // Ampersand
-    .replace(/&lt;/g, "<")      // Less than
-    .replace(/&gt;/g, ">")      // Greater than
-    .replace(/&#39;/g, "'")     // Apostrophe
-    .replace(/&rsquo;/g, "'")   // Right single quote
-    .replace(/&lsquo;/g, "'")   // Left single quote
-    .replace(/&rdquo;/g, '"')   // Right double quote
-    .replace(/&ldquo;/g, '"')   // Left double quote
-    .replace(/&mdash;/g, "—")   // Em dash
-    .replace(/&ndash;/g, "–");  // En dash
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8243;/g, '"')
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8212;/g, "—")
+    .replace(/&#038;/g, "&")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8230;/g, "…")
+    .replace(/&#160;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&rdquo;/g, '"')
+    .replace(/&ldquo;/g, '"')
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–");
 }
 
 // Helper function to clean HTML content and extract structured data
 function extractContentFromWordPress(rawContent: string) {
-  // Decode HTML entities first - THIS IS THE KEY FIX
   const content = decodeEntities(rawContent);
 
-  // Extract the main text content from paragraph tags
   const textMatches = content.match(/<p>(.*?)<\/p>/g) || [];
   const textContent = textMatches
     .map(p => p.replace(/<[^>]+>/g, '').trim())
     .filter(Boolean);
 
-  // Extract list items
   const listMatches = content.match(/<li[^>]*>(.*?)<\/li>/g) || [];
   const listItems = listMatches
     .map(li => li.replace(/<[^>]+>/g, '').trim())
     .filter(Boolean);
 
-  // Extract headings/sections - now works with decoded quotes
   const sections = [
     ...content.matchAll(/title_suffix="([^"]+)"/g),
   ].map(m => m[1]);
 
-  // Extract image URLs - now works with decoded quotes
   const imageUrls = [
     ...content.matchAll(/src="([^"]+\.(?:jpg|jpeg|png|webp))/gi),
   ].map(m => m[1]);
 
-  // Extract video URL - works with decoded quotes
   let videoUrl: string | null = null;
   const videoMatch = content.match(
     /src="https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\/)([^"?&]+)/i
@@ -66,17 +59,32 @@ function extractContentFromWordPress(rawContent: string) {
     videoUrl = `https://www.youtube.com/embed/${videoMatch[1]}`;
   }
 
-  // Extract book information - works with decoded quotes
   const bookTitles: string[] = [];
   const bookImages: string[] = [];
   
-  // Find all book sections (they have both title_suffix and src)
-  const bookRegex = /title_suffix="([^"]*)"[^>]*>[\s\S]*?src="([^"]*\.(jpg|jpeg|png))"/g;
+  const bookSectionRegex = /dg_adh_heading[^>]*title_suffix="([^"]*)"[^>]*>[\s\S]*?et_pb_image[^>]*src="([^"]*\.(jpg|jpeg|png))"/g;
   let bookMatch;
-  while ((bookMatch = bookRegex.exec(content)) !== null) {
+  while ((bookMatch = bookSectionRegex.exec(content)) !== null) {
     if (bookMatch[1] && bookMatch[2]) {
-      bookTitles.push(bookMatch[1]);
-      bookImages.push(bookMatch[2]);
+      const title = bookMatch[1];
+      if (title.includes('No Rhyme') || title.includes('Social Justice') || title.includes('Kill the Bastard')) {
+        bookTitles.push(title);
+        bookImages.push(bookMatch[2]);
+      }
+    }
+  }
+
+  if (bookTitles.length === 0) {
+    const fallbackRegex = /title_suffix="([^"]*)"[^>]*>[\s\S]*?src="([^"]*\.(jpg|jpeg|png))"/g;
+    let fallbackMatch;
+    while ((fallbackMatch = fallbackRegex.exec(content)) !== null) {
+      if (fallbackMatch[1] && fallbackMatch[2]) {
+        const title = fallbackMatch[1];
+        if (title.includes('No Rhyme') || title.includes('Social Justice') || title.includes('Kill the Bastard')) {
+          bookTitles.push(title);
+          bookImages.push(fallbackMatch[2]);
+        }
+      }
     }
   }
 
@@ -102,13 +110,6 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   const content = page.content || '';
   const extracted = extractContentFromWordPress(content);
 
-  // Debug: log the extracted data to verify it's working
-  console.log('Extracted video URL:', extracted.videoUrl);
-  console.log('Extracted images:', extracted.imageUrls);
-  console.log('Extracted sections:', extracted.sections);
-  console.log('Extracted books:', extracted.bookTitles);
-
-  // Organize extracted content into sections
   const heroTitle = page.title || "Hundred Stories Project";
   
   const mainDescription = extracted.textContent[0] || "";
@@ -118,14 +119,21 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   const keyComponents = extracted.listItems.slice(0, 3);
   const whyItMattersItems = extracted.listItems.slice(3, 6);
 
-  // Get book data
   const books = [
-    { title: extracted.bookTitles[0] || 'No Rhyme or Reason', img: extracted.bookImages[0] || '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg' },
-    { title: extracted.bookTitles[1] || 'Social Justice Autobiographies', img: extracted.bookImages[1] || '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg' },
-    { title: extracted.bookTitles[2] || 'Kill the Bastard', img: extracted.bookImages[2] || '/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg' }
+    { 
+      title: extracted.bookTitles[0] || 'No Rhyme or Reason', 
+      img: extracted.bookImages[0] || 'https://ubfsf.org/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg' 
+    },
+    { 
+      title: extracted.bookTitles[1] || 'Social Justice Autobiographies', 
+      img: extracted.bookImages[1] || 'https://ubfsf.org/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg' 
+    },
+    { 
+      title: extracted.bookTitles[2] || 'Kill the Bastard', 
+      img: extracted.bookImages[2] || 'https://ubfsf.org/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg' 
+    }
   ];
 
-  // Three pillars data
   const pillars = [
     {
       icon: "✍️",
@@ -144,19 +152,50 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
     }
   ];
 
+  function getImageUrl(imagePath: string, fallback: string): string {
+    if (!imagePath) return fallback;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    try {
+      const url = getWpImageUrl(imagePath);
+      return url || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
   return (
     <main className="bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] min-h-screen font-serif">
       
-      {/* HERO SECTION */}
-      <section className="relative bg-black dark:bg-[#0a0a0a] text-white py-24 md:py-32 px-6 md:px-20">
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-6 leading-[1.1]">
+      {/* HERO SECTION - With "Unsung Voices" */}
+      <section className="relative bg-black dark:bg-[#0a0a0a] text-white py-24 md:py-32 px-6 md:px-20 overflow-hidden">
+        {/* Background pattern - layered handwritten excerpts effect */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 text-4xl font-serif italic text-white/20 rotate-[-5deg]">✍️</div>
+          <div className="absolute bottom-20 right-20 text-6xl font-serif italic text-white/20 rotate-[15deg]">📝</div>
+          <div className="absolute top-1/2 left-1/4 text-5xl font-serif italic text-white/20 rotate-[8deg]">✒️</div>
+          <div className="absolute bottom-1/3 right-1/3 text-3xl font-serif italic text-white/20 rotate-[-12deg]">📖</div>
+          {/* Subtle handwritten line pattern */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cGF0aCBkPSJNMzAgMzBhMTAgMTAgMCAwIDEgMjAgMCAxMCAxMCAwIDAgMS0yMCAweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] bg-repeat opacity-20"></div>
+        </div>
+        
+        <div className="relative max-w-5xl mx-auto text-center">
+          {/* Gold accent badge */}
+          <div className="inline-block bg-[#FFB81C] text-black px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
+            Unsung Voices
+          </div>
+          
+          <h1 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-6 leading-[1.1] text-white">
             {heroTitle}
           </h1>
           <div className="w-20 h-1 bg-[#FFB81C] mx-auto mb-8"></div>
+          
+          {/* Updated tagline */}
           <p className="text-xl md:text-2xl text-stone-300 max-w-3xl mx-auto leading-relaxed font-light">
-            "Every story deserves to be heard. One Hundred Stories. One Shared Humanity."
+            "Amplifying the voices that have been silenced. One story at a time."
           </p>
+          
           <div className="mt-10 flex gap-4 justify-center flex-wrap">
             <a 
               href="https://zomedia.netlify.app/about/" 
@@ -175,6 +214,9 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
         {/* GIVING VOICE SECTION */}
         <section className="grid md:grid-cols-2 gap-16 items-center mb-24">
           <div>
+            <div className="inline-block text-[#FFB81C] text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              — Giving Voice
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black dark:text-white leading-tight">
               Giving Voice to the <br />
               <span className="text-[#FFB81C]">Voiceless</span>
@@ -197,7 +239,7 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
           <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden shadow-xl">
             {extracted.imageUrls.length > 0 && (
               <Image 
-                src={getWpImageUrl(extracted.imageUrls[0])} 
+                src={getImageUrl(extracted.imageUrls[0], "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80")} 
                 alt="Hundred Stories Bookshelf" 
                 fill 
                 className="object-cover hover:scale-105 transition-transform duration-700" 
@@ -210,6 +252,9 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
         {/* THREE PILLARS SECTION */}
         <section className="mb-24">
           <div className="text-center mb-16">
+            <div className="inline-block text-[#FFB81C] text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              — Our Foundation
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
               Our Three Pillars
             </h2>
@@ -234,6 +279,9 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
         {/* EXPANDING PERSPECTIVES WITH VIDEO */}
         <section className="grid md:grid-cols-2 gap-16 items-center mb-24">
           <div className="order-2 md:order-1">
+            <div className="inline-block text-[#FFB81C] text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              — Multimedia Storytelling
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black dark:text-white leading-tight">
               Expanding Perspectives <br />
               <span className="text-[#FFB81C]">Through Storytelling</span>
@@ -274,12 +322,12 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
         {/* FEATURED WORKS */}
         <section className="mb-24">
           <div className="text-center mb-16">
+            <div className="inline-block text-[#FFB81C] text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              — Featured Publications
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
               Featured Works
             </h2>
-            <p className="text-stone-600 dark:text-stone-400 max-w-2xl mx-auto">
-              by Ivan Kilgore, UBFSF Founder
-            </p>
             <div className="w-16 h-1 bg-[#FFB81C] mx-auto mt-4"></div>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -290,11 +338,12 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
               >
                 <div className="relative aspect-[2/3] bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden">
                   <Image 
-                    src={getWpImageUrl(book.img)} 
+                    src={book.img} 
                     alt={book.title} 
                     fill 
                     className="object-cover group-hover:scale-105 transition-transform duration-700" 
                     sizes="(max-width: 768px) 100vw, 33vw"
+                    unoptimized={book.img.startsWith('http')}
                   />
                 </div>
                 <div className="p-6">
@@ -317,6 +366,9 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
         {/* WHY THIS PROJECT MATTERS */}
         <section className="bg-stone-50 dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-800 p-12 md:p-16 mb-24">
           <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-block text-[#FFB81C] text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              — Impact
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black dark:text-white">
               Why This Project <span className="text-[#FFB81C]">Matters</span>
             </h2>
@@ -341,9 +393,7 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
                 </span>
               </p>
               <a 
-                href="https://ubfsf.org/contact/" 
-                target="_blank" 
-                rel="noopener noreferrer"
+                href="/contact" 
                 className="inline-block mt-4 bg-[#FFB81C] text-black px-10 py-4 text-sm font-bold uppercase tracking-wider hover:bg-[#e6a500] transition-all duration-300"
               >
                 Contact Us
