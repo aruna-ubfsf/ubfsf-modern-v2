@@ -16,7 +16,7 @@ export default function Navbar() {
     { title: "Hundred Stories Project", href: "/programs/hundred-stories" },
     { title: "Nonprofit Coaching & Fellowship", href: "/programs/coaching" },
     { title: "Rebuild", href: "/programs/rebuild" },
-    { title: "Writing Beyond the Prison", href: "/programs/writing" }
+    // { title: "Writing Beyond the Prison", href: "/programs/writing" }
   ];
 
   const aboutLinks = [
