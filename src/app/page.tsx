@@ -20,10 +20,15 @@ function parseHomeContent(content: string) {
   let founderMessage = '';
   let founderImage = '';
   let donationItems: string[] = [];
+  let videoUrl = '';
+  let objectives: { title: string; description: string }[] = [];
+  let donateTitle = '';
+  let donateDescription = '';
 
-  const missionMatch = cleanContent.match(/Mission Statement[\s\S]*?<p>([\s\S]*?)<\/p>/);
-  if (missionMatch) {
-    mission = missionMatch[1]
+  // Extract Mission - from the et_pb_text inside the Mission Statement section
+  const missionSection = cleanContent.match(/Mission Statement[\s\S]*?<p>([\s\S]*?)<\/p>/i);
+  if (missionSection) {
+    mission = missionSection[1]
       .replace(/<[^>]*>/g, '')
       .replace(/&#822[01];/g, '"')
       .replace(/&#8217;/g, "'")
@@ -31,10 +36,11 @@ function parseHomeContent(content: string) {
       .trim();
   }
 
+  // If mission not found, try alternative pattern
   if (!mission) {
-    const missionAltMatch = cleanContent.match(/<p><span[^>]*>([\s\S]*?mission[\s\S]*?)<\/span><\/p>/i);
-    if (missionAltMatch) {
-      mission = missionAltMatch[1]
+    const missionAlt = cleanContent.match(/<p><span style="font-weight: 400;">([\s\S]*?Our mission at the United Black Family Scholarship Foundation[\s\S]*?)<\/span><\/p>/i);
+    if (missionAlt) {
+      mission = missionAlt[1]
         .replace(/<[^>]*>/g, '')
         .replace(/&#822[01];/g, '"')
         .replace(/&#8217;/g, "'")
@@ -43,6 +49,7 @@ function parseHomeContent(content: string) {
     }
   }
 
+  // Extract Malcolm X Quote
   const quoteMatch = cleanContent.match(/<h4><b>([\s\S]*?)<\/b><\/h4>/);
   if (quoteMatch) {
     quote = quoteMatch[1]
@@ -53,7 +60,8 @@ function parseHomeContent(content: string) {
       .trim();
   }
 
-  const visionMatch = cleanContent.match(/Vision[\s\S]*?<p>([\s\S]*?)<\/p>/);
+  // Extract Vision
+  const visionMatch = cleanContent.match(/<p><span style="font-weight: 400;">([\s\S]*?We envision a world[\s\S]*?)<\/span><\/p>/i);
   if (visionMatch) {
     vision = visionMatch[1]
       .replace(/<[^>]*>/g, '')
@@ -63,26 +71,16 @@ function parseHomeContent(content: string) {
       .trim();
   }
 
-  if (!vision) {
-    const visionAltMatch = cleanContent.match(/<p><span[^>]*>([\s\S]*?vision[\s\S]*?)<\/span><\/p>/i);
-    if (visionAltMatch) {
-      vision = visionAltMatch[1]
-        .replace(/<[^>]*>/g, '')
-        .replace(/&#822[01];/g, '"')
-        .replace(/&#8217;/g, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-  }
-
-  const founderImgMatch = cleanContent.match(/\[et_pb_image[^\]]*src=["']([^"']+)["']/);
+  // Extract Founder Image
+  const founderImgMatch = cleanContent.match(/\[et_pb_image[^\]]*src="([^"]+)"[^\]]*\]/);
   if (founderImgMatch) {
     founderImage = founderImgMatch[1];
   }
 
-  const founderMatch = cleanContent.match(/A Word From Our Founder[\s\S]*?<p>([\s\S]*?)<\/p>/);
-  if (founderMatch) {
-    founderMessage = founderMatch[1]
+  // Extract Founder Message - from A Word From Our Founder section
+  const founderSection = cleanContent.match(/A Word From Our Founder[\s\S]*?<p>([\s\S]*?)<\/p>/i);
+  if (founderSection) {
+    founderMessage = founderSection[1]
       .replace(/<[^>]*>/g, '')
       .replace(/&#822[01];/g, '"')
       .replace(/&#8217;/g, "'")
@@ -90,9 +88,10 @@ function parseHomeContent(content: string) {
       .trim();
   }
 
-  const donateMatch = cleanContent.match(/<ul>([\s\S]*?)<\/ul>/);
-  if (donateMatch) {
-    const items = donateMatch[1].match(/<li[^>]*>([\s\S]*?)<\/li>/g);
+  // Extract Donation Items
+  const donateListMatch = cleanContent.match(/<ul>([\s\S]*?)<\/ul>/);
+  if (donateListMatch) {
+    const items = donateListMatch[1].match(/<li[^>]*>([\s\S]*?)<\/li>/g);
     if (items) {
       donationItems = items.map(item => 
         item.replace(/<[^>]*>/g, '').replace(/:/g, '').trim()
@@ -100,7 +99,69 @@ function parseHomeContent(content: string) {
     }
   }
 
-  return { mission, quote, vision, founderMessage, founderImage, donationItems };
+  // Extract Video URL
+  const videoMatch = cleanContent.match(/\[et_pb_video[^\]]*src="([^"]+)"[^\]]*\]/);
+  if (videoMatch) {
+    videoUrl = videoMatch[1];
+  }
+
+  // Extract Objectives - from the three cards
+  const objectiveMatches = cleanContent.match(/<p><span style="text-decoration: underline;">\s*<strong>([\s\S]*?)<\/strong>\s*<\/span><\/p>\s*<p><span style="font-weight: 400;">([\s\S]*?)<\/span><\/p>/g);
+  if (objectiveMatches) {
+    objectiveMatches.forEach((match) => {
+      const titleMatch = match.match(/<strong>([\s\S]*?)<\/strong>/);
+      const descMatch = match.match(/<span style="font-weight: 400;">([\s\S]*?)<\/span>/);
+      if (titleMatch && descMatch) {
+        objectives.push({
+          title: titleMatch[1].trim(),
+          description: descMatch[1].trim()
+        });
+      }
+    });
+  }
+
+  // If no objectives found, try alternative pattern
+  if (objectives.length === 0) {
+    const objPattern = /<p><span style="text-decoration: underline;">\s*<b>([\s\S]*?)<\/b>\s*<\/span><\/p>\s*<p><span style="font-weight: 400;">([\s\S]*?)<\/span><\/p>/g;
+    let objMatch;
+    while ((objMatch = objPattern.exec(cleanContent)) !== null) {
+      if (objMatch[1] && objMatch[2]) {
+        objectives.push({
+          title: objMatch[1].trim(),
+          description: objMatch[2].trim()
+        });
+      }
+    }
+  }
+
+  // Extract Donate Section Title and Description
+  const donateTitleMatch = cleanContent.match(/title_prefix="([^"]*Empower Communities Through Education[^"]*)"[^>]*>/);
+  if (donateTitleMatch) {
+    donateTitle = donateTitleMatch[1].trim();
+  }
+
+  const donateDescMatch = cleanContent.match(/<p>([\s\S]*?Every donation directly supports[\s\S]*?)<\/p>/i);
+  if (donateDescMatch) {
+    donateDescription = donateDescMatch[1]
+      .replace(/<[^>]*>/g, '')
+      .replace(/&#822[01];/g, '"')
+      .replace(/&#8217;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  return { 
+    mission, 
+    quote, 
+    vision, 
+    founderMessage, 
+    founderImage, 
+    donationItems, 
+    videoUrl,
+    objectives,
+    donateTitle,
+    donateDescription
+  };
 }
 
 export default async function HomePage() {
@@ -109,21 +170,41 @@ export default async function HomePage() {
     getPosts(6)
   ]);
 
-  const { mission, quote, vision, founderMessage, founderImage, donationItems } = 
-    pageData ? parseHomeContent(pageData.content) : { 
-      mission: '', quote: '', vision: '', founderMessage: '', founderImage: '', donationItems: [] 
-    };
+  const { 
+    mission, 
+    quote, 
+    vision, 
+    founderMessage, 
+    founderImage, 
+    donationItems,
+    videoUrl,
+    objectives,
+    donateTitle,
+    donateDescription
+  } = pageData ? parseHomeContent(pageData.content) : { 
+    mission: '', 
+    quote: '', 
+    vision: '', 
+    founderMessage: '', 
+    founderImage: '', 
+    donationItems: [],
+    videoUrl: '',
+    objectives: [],
+    donateTitle: '',
+    donateDescription: ''
+  };
 
-  const displayMission = mission || "Our mission at the United Black Family Scholarship Foundation is to foster accessible, high-quality education for individuals of all races, driving systemic change in political structures that perpetuate poverty and inequality. Our initiatives go beyond traditional academic credentials, focusing on education as a tool for 'Rebuilding the Community from Within.' We empower communities with the knowledge and resources to lead grassroots movements and promote transformative social and political change.";
-  
-  const displayVision = vision || "We envision a world where everyone has access to an education that empowers them to overcome social and economic challenges, breaking the cycle of poverty and dismantling systemic racism.";
-
-  const displayQuote = quote || "Education is our passport to the future, for tomorrow belongs to the people who prepare for it today.";
+  // Debug - check what's being extracted
+  console.log('Mission:', mission);
+  console.log('Vision:', vision);
+  console.log('Quote:', quote);
+  console.log('Objectives:', objectives);
+  console.log('Donation Items:', donationItems);
 
   return (
     <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif selection:bg-[#FFB81C]/30">
       
-      {/* VIDEO HERO - Now properly responsive with object-contain */}
+      {/* VIDEO HERO */}
       <section className="relative h-screen w-full overflow-hidden bg-black">
         <video
           autoPlay
@@ -133,7 +214,7 @@ export default async function HomePage() {
           className="absolute inset-0 w-full h-full object-contain"
           poster="/assets/hero-poster.jpg"
         >
-          <source src="https://ubfsf.org/wp-content/uploads/2023/04/ivan-headspin.mp4" type="video/mp4" />
+          <source src={videoUrl || "https://ubfsf.org/wp-content/uploads/2023/04/ivan-headspin.mp4"} type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center text-white/50 animate-bounce">
@@ -144,14 +225,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* REBUILDING COMMUNITY - Responsive */}
+      {/* REBUILDING COMMUNITY */}
       <section className="py-16 md:py-24 px-4 md:px-20 bg-white dark:bg-[#1a1a1a] border-t border-black/5 dark:border-white/5">
         <div className="max-w-6xl mx-auto text-center">
           <div className="w-12 md:w-16 h-1 bg-[#FFB81C] mx-auto mb-6 md:mb-8" />
           <span className="inline-block text-[#FFB81C] text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-4 md:mb-6">
             United Black Family Scholarship Foundation
           </span>
-          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-6 md:mb-8">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-6 md:mb-8 text-black dark:text-white">
             Rebuilding <br />
             <span className="text-[#FFB81C]">Community</span>
           </h1>
@@ -169,95 +250,95 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* MISSION & VISION - Responsive */}
-      <section className="py-16 md:py-20 px-4 md:px-20 bg-stone-50 dark:bg-[#2a2a2a]">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-10 md:gap-16">
-            {/* Mission */}
-            <div>
-              <span className="inline-block text-[#FFB81C] text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-3 md:mb-4">Mission</span>
-              <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mb-4 md:mb-6" />
-              <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mb-4 md:mb-6">
-                Our <span className="text-[#FFB81C]">Mission</span>
+      {/* MISSION & VISION - DYNAMIC FROM WORDPRESS */}
+      {(mission || vision) && (
+        <section className="py-16 md:py-20 px-4 md:px-20 bg-stone-50 dark:bg-[#2a2a2a]">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-10 md:gap-16">
+              {/* Mission */}
+              {mission && (
+                <div>
+                  <span className="inline-block text-[#FFB81C] text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-3 md:mb-4">Mission</span>
+                  <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mb-4 md:mb-6" />
+                  <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mb-4 md:mb-6 text-black dark:text-white">
+                    Our <span className="text-[#FFB81C]">Mission</span>
+                  </h2>
+                  <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
+                    {mission}
+                  </p>
+                </div>
+              )}
+              
+              {/* Vision */}
+              {vision && (
+                <div>
+                  <span className="inline-block text-[#FFB81C] text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-3 md:mb-4">Vision</span>
+                  <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mb-4 md:mb-6" />
+                  <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mb-4 md:mb-6 text-black dark:text-white">
+                    Our <span className="text-[#FFB81C]">Vision</span>
+                  </h2>
+                  <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
+                    {vision}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* MALCOLM X QUOTE */}
+      {quote && (
+        <section className="py-20 md:py-28 px-4 md:px-20 bg-black text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-[#FFB81C] to-transparent" />
+            <div className="absolute bottom-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#FFB81C] to-transparent" />
+          </div>
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <span className="text-5xl md:text-8xl text-[#FFB81C] font-serif opacity-30">"</span>
+            <blockquote className="text-xl sm:text-2xl md:text-4xl font-light italic text-white leading-relaxed -mt-4 md:-mt-6 px-2">
+              {quote}
+            </blockquote>
+            <div className="w-12 md:w-16 h-0.5 bg-[#FFB81C] mx-auto my-4 md:my-6" />
+            <p className="text-[#FFB81C] font-bold uppercase tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-sm">— Malcolm X</p>
+          </div>
+        </section>
+      )}
+
+      {/* OBJECTIVES - DYNAMIC FROM WORDPRESS */}
+      {objectives.length > 0 && (
+        <section className="py-16 md:py-24 px-4 md:px-20 bg-white dark:bg-[#1a1a1a]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12 md:mb-16">
+              <span className="inline-block text-[#FFB81C] text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-3 md:mb-4">
+                Our Focus
+              </span>
+              <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mx-auto mb-4 md:mb-6" />
+              <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter mb-3 md:mb-4 text-black dark:text-white">
+                Organizational <span className="text-[#FFB81C]">Objectives</span>
               </h2>
-              <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
-                {displayMission}
+              <p className="text-stone-500 dark:text-stone-400 max-w-2xl mx-auto font-light italic text-sm md:text-base">
+                💡 Ideas + ⚙️ Collective Action = 📈 Community Growth
               </p>
             </div>
             
-            {/* Vision */}
-            <div>
-              <span className="inline-block text-[#FFB81C] text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-3 md:mb-4">Vision</span>
-              <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mb-4 md:mb-6" />
-              <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mb-4 md:mb-6">
-                Our <span className="text-[#FFB81C]">Vision</span>
-              </h2>
-              <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
-                {displayVision}
-              </p>
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+              {objectives.map((obj, index) => (
+                <div key={index} className="group bg-stone-50 dark:bg-[#2a2a2a] p-6 md:p-8 rounded-sm border-l-4 border-[#FFB81C]/30 hover:border-[#FFB81C] hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <h3 className="text-base md:text-xl font-bold mb-2 md:mb-3 text-black dark:text-white group-hover:text-[#FFB81C] transition-colors">
+                    {obj.title}
+                  </h3>
+                  <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
+                    {obj.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* MALCOLM X QUOTE - Responsive */}
-      <section className="py-20 md:py-28 px-4 md:px-20 bg-black text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-[#FFB81C] to-transparent" />
-          <div className="absolute bottom-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#FFB81C] to-transparent" />
-        </div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <span className="text-5xl md:text-8xl text-[#FFB81C] font-serif opacity-30">"</span>
-          <blockquote className="text-xl sm:text-2xl md:text-4xl font-light italic text-white leading-relaxed -mt-4 md:-mt-6 px-2">
-            {displayQuote}
-          </blockquote>
-          <div className="w-12 md:w-16 h-0.5 bg-[#FFB81C] mx-auto my-4 md:my-6" />
-          <p className="text-[#FFB81C] font-bold uppercase tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-sm">— Malcolm X</p>
-        </div>
-      </section>
-
-      {/* OBJECTIVES - Responsive */}
-      <section className="py-16 md:py-24 px-4 md:px-20 bg-white dark:bg-[#1a1a1a]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12 md:mb-16">
-            <span className="inline-block text-[#FFB81C] text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] mb-3 md:mb-4">
-              Our Focus
-            </span>
-            <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mx-auto mb-4 md:mb-6" />
-            <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter mb-3 md:mb-4">
-              Organizational <span className="text-[#FFB81C]">Objectives</span>
-            </h2>
-            <p className="text-stone-500 dark:text-stone-400 max-w-2xl mx-auto font-light italic text-sm md:text-base">
-              Ideas + Collective Action = Community Growth
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-            <div className="group bg-stone-50 dark:bg-[#2a2a2a] p-6 md:p-8 rounded-sm border-l-4 border-[#FFB81C]/30 hover:border-[#FFB81C] hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <h3 className="text-base md:text-xl font-bold mb-2 md:mb-3 group-hover:text-[#FFB81C] transition-colors">Expand Community Investment</h3>
-              <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
-                Implement Scholarship & Community Grant, Internship, and R.E.B.U.I.L.D. programs to support underserved communities.
-              </p>
-            </div>
-            
-            <div className="group bg-stone-50 dark:bg-[#2a2a2a] p-6 md:p-8 rounded-sm border-l-4 border-[#FFB81C]/30 hover:border-[#FFB81C] hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <h3 className="text-base md:text-xl font-bold mb-2 md:mb-3 group-hover:text-[#FFB81C] transition-colors">Foster Social & Economic Change</h3>
-              <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
-                Demonstrate how collaborative action empowers communities to overcome economic disparities.
-              </p>
-            </div>
-            
-            <div className="group bg-stone-50 dark:bg-[#2a2a2a] p-6 md:p-8 rounded-sm border-l-4 border-[#FFB81C]/30 hover:border-[#FFB81C] hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <h3 className="text-base md:text-xl font-bold mb-2 md:mb-3 group-hover:text-[#FFB81C] transition-colors">Strengthen Community-Led Systems</h3>
-              <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
-                Showcase an organizational framework led by community-driven leaders committed to economic empowerment.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FOUNDER'S MESSAGE - Responsive */}
+      {/* FOUNDER'S MESSAGE - DYNAMIC FROM WORDPRESS */}
       {founderMessage && (
         <section className="py-16 md:py-24 px-4 md:px-20 bg-stone-50 dark:bg-[#2a2a2a]">
           <div className="max-w-6xl mx-auto">
@@ -267,25 +348,11 @@ export default async function HomePage() {
                   Founder's Message
                 </span>
                 <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mb-4 md:mb-6" />
-                <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter mb-4 md:mb-6">
+                <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter mb-4 md:mb-6 text-black dark:text-white">
                   A Word From <span className="text-[#FFB81C]">Ivan Kilgore</span>
                 </h2>
-                <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed">
+                <div className="text-sm md:text-base text-stone-600 dark:text-stone-400 leading-relaxed space-y-4">
                   {founderMessage}
-                </p>
-                <div className="mt-4 md:mt-6 space-y-2 text-stone-600 dark:text-stone-400 text-sm">
-                  <p className="flex items-start gap-2 md:gap-3">
-                    <span className="text-[#FFB81C] font-bold">01</span>
-                    <span>Build Life and Job Skills</span>
-                  </p>
-                  <p className="flex items-start gap-2 md:gap-3">
-                    <span className="text-[#FFB81C] font-bold">02</span>
-                    <span>Achieve Economic Stability</span>
-                  </p>
-                  <p className="flex items-start gap-2 md:gap-3">
-                    <span className="text-[#FFB81C] font-bold">03</span>
-                    <span>Disrupt the School-to-Prison Pipeline</span>
-                  </p>
                 </div>
                 <Link 
                   href="/about/ivan-kilgore" 
@@ -311,36 +378,45 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* DONATE SECTION - Responsive */}
-      <section className="py-16 md:py-24 px-4 md:px-20 bg-white dark:bg-[#1a1a1a]">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter mb-4 md:mb-6">
-            Empower Communities Through <span className="text-[#FFB81C]">Education & Opportunity</span>
-          </h2>
-          <div className="w-12 md:w-16 h-0.5 bg-[#FFB81C] mx-auto mb-6 md:mb-8" />
-          <p className="text-sm md:text-base text-stone-500 dark:text-stone-400 max-w-2xl mx-auto mb-8 md:mb-12 font-light px-2">
-            Every donation directly supports our mission-driven programs that empower underserved communities and foster lasting change.
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
-            {donationItems.slice(0, 3).map((item, index) => (
-              <div key={index} className="bg-stone-50 dark:bg-[#2a2a2a] p-6 md:p-8 rounded-sm border border-black/5 dark:border-white/5 hover:shadow-lg hover:border-[#FFB81C]/30 transition-all duration-300 group">
-                <div className="w-6 md:w-8 h-0.5 bg-[#FFB81C] mb-3 md:mb-4 group-hover:w-8 md:group-hover:w-12 transition-all duration-300" />
-                <h4 className="font-bold text-base md:text-lg mb-1 md:mb-2">{item}</h4>
-              </div>
-            ))}
+      {/* DONATE SECTION - DYNAMIC FROM WORDPRESS */}
+      {donationItems.length > 0 && (
+        <section className="py-16 md:py-24 px-4 md:px-20 bg-white dark:bg-[#1a1a1a]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mb-4 md:mb-6 text-black dark:text-white">
+                Empower Communities Through <span className="text-[#FFB81C]">Education & Opportunity</span>
+              </h2>
+              <div className="w-12 md:w-16 h-0.5 bg-[#FFB81C] mx-auto mb-6 md:mb-8" />
+              <p className="text-sm md:text-base text-stone-600 dark:text-stone-400 max-w-3xl mx-auto leading-relaxed">
+                Every donation directly supports our mission-driven programs that empower underserved communities and foster lasting change. Your contributions help fund the following initiatives:
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
+              {donationItems.map((item, index) => (
+                <div key={index} className="bg-stone-50 dark:bg-[#2a2a2a] p-6 md:p-8 rounded-sm border border-black/5 dark:border-white/5 hover:shadow-lg hover:border-[#FFB81C]/30 transition-all duration-300 group">
+                  <div className="w-6 md:w-8 h-0.5 bg-[#FFB81C] mb-3 md:mb-4 group-hover:w-8 md:group-hover:w-12 transition-all duration-300" />
+                  <h4 className="font-bold text-base md:text-lg mb-1 md:mb-2 text-black dark:text-white">{item}</h4>
+                </div>
+              ))}
+            </div>
+            
+            <div className="text-center">
+              <p className="text-sm text-stone-600 dark:text-stone-400 max-w-2xl mx-auto mb-6">
+                We are committed to transparency and impact. If you have any questions about how your donations are used, please feel free to contact us.
+              </p>
+              <Link 
+                href="/donate" 
+                className="inline-block px-8 md:px-12 py-4 md:py-5 bg-[#FFB81C] text-black text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded-sm"
+              >
+                Donate Now
+              </Link>
+            </div>
           </div>
-          
-          <Link 
-            href="/donate" 
-            className="inline-block px-8 md:px-12 py-4 md:py-5 bg-[#FFB81C] text-black text-[10px] md:text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded-sm"
-          >
-            Donate Now
-          </Link>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* LATEST UPDATES - Responsive */}
+      {/* LATEST UPDATES */}
       <section className="py-16 md:py-24 px-4 md:px-20 bg-stone-50 dark:bg-[#2a2a2a]">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-wrap items-center justify-between mb-8 md:mb-12">
@@ -349,7 +425,7 @@ export default async function HomePage() {
                 Latest Updates
               </span>
               <div className="w-10 md:w-12 h-0.5 bg-[#FFB81C] mb-3 md:mb-4" />
-              <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter">
+              <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter text-black dark:text-white">
                 From the <span className="text-[#FFB81C]">Newsroom</span>
               </h2>
             </div>
@@ -384,7 +460,7 @@ export default async function HomePage() {
                         day: 'numeric' 
                       })}
                     </time>
-                    <h3 className="text-base md:text-xl font-bold tracking-tight mb-2 group-hover:text-[#FFB81C] transition-colors line-clamp-2">
+                    <h3 className="text-base md:text-xl font-bold tracking-tight mb-2 text-black dark:text-white group-hover:text-[#FFB81C] transition-colors line-clamp-2">
                       {post.title}
                     </h3>
                     <div 
@@ -402,11 +478,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA FOOTER - Responsive */}
+      {/* CTA FOOTER */}
       <section className="py-16 md:py-20 px-4 md:px-20 bg-black text-white text-center">
         <div className="max-w-4xl mx-auto">
           <div className="w-12 md:w-16 h-0.5 bg-[#FFB81C] mx-auto mb-6 md:mb-8" />
-          <h2 className="text-3xl md:text-6xl font-black uppercase tracking-tighter mb-4 md:mb-6">
+          <h2 className="text-3xl md:text-6xl font-black uppercase tracking-tighter mb-4 md:mb-6 text-white">
             Join Us in <span className="text-[#FFB81C]">Rebuilding</span> Community
           </h2>
           <p className="text-sm md:text-base text-white/60 max-w-2xl mx-auto mb-6 md:mb-8 font-light px-2">
