@@ -48,7 +48,6 @@ function parseBoardContent(content: string) {
     for (const row of rows) {
       if (!row.trim()) continue;
 
-      // Extract bio
       const bioTextMatch = row.match(/\[et_pb_text[^\]]*\]([\s\S]*?)\[\/et_pb_text\]/);
       let bio = '';
       if (bioTextMatch) {
@@ -65,14 +64,12 @@ function parseBoardContent(content: string) {
 
       if (!bio) continue;
 
-      // Extract image
       let img = '';
       const imgMatch = row.match(/\[et_pb_image[^\]]*src=["']([^"']+)["']/);
       if (imgMatch) {
         img = imgMatch[1];
       }
 
-      // Extract name
       let name = '';
       const nameMatch = row.match(/\[dg_adh_heading[^\]]*title_prefix=["']([^"']+)["']/);
       if (nameMatch) {
@@ -90,7 +87,6 @@ function parseBoardContent(content: string) {
         continue;
       }
 
-      // Extract role
       let role = 'Board Member';
       const roleMatch = section.match(/title_prefix=["']([^"']+)["']/);
       if (roleMatch && !roleMatch[1].includes('BOARD MEMBER') && !roleMatch[1].includes('Staff')) {
@@ -115,138 +111,173 @@ function parseBoardContent(content: string) {
 }
 
 export default async function BoardOfDirectorsPage() {
-  // Fetch from WordPress using the correct slug
   const page = await getPageBySlug('board-of-directors-2');
 
-  // If no page found
   if (!page) {
     return (
-      <main className="min-h-screen bg-[#141414] text-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-[#1e1e1e] border border-stone-800 p-8 rounded-2xl text-center shadow-2xl">
-          <span className="text-[#FFB81C] text-xs font-bold tracking-[0.25em] uppercase block mb-3">Notice</span>
-          <h1 className="text-2xl font-black uppercase mb-3 tracking-tight">Page Not Found</h1>
-          <p className="text-stone-400 text-sm mb-6 leading-relaxed">
-            Could not retrieve Board of Directors data from WordPress.
-          </p>
-          <p className="text-stone-500 text-xs mb-6">
-            Trying to fetch: <span className="text-[#FFB81C] font-mono">board-of-directors-2</span>
-          </p>
-          <Link 
-            href="/" 
-            className="inline-block w-full py-3 bg-[#FFB81C] hover:bg-yellow-500 text-black text-xs font-bold tracking-widest uppercase transition-all rounded-lg text-center"
-          >
-            Back to Home
-          </Link>
-        </div>
+      <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif">
+        <header className="relative h-[40vh] flex items-end pb-16 px-6 md:px-20 overflow-hidden border-b border-black/10 dark:border-white/10">
+          <div className="relative z-10 max-w-7xl mx-auto w-full">
+            <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+              Leadership
+            </span>
+            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.85] mb-4">
+              Board of <span className="text-[#FFB81C]">Directors</span>
+            </h1>
+            <p className="text-lg md:text-xl text-stone-600 dark:text-stone-400 max-w-2xl font-light">
+              Dedicated leaders guiding our mission and vision.
+            </p>
+          </div>
+        </header>
+        
+        <section className="max-w-4xl mx-auto py-16 px-6 md:px-20 text-center">
+          <div className="bg-stone-50 dark:bg-[#2a2a2a] p-8 rounded-2xl border border-black/5 dark:border-white/5">
+            <h2 className="text-xl font-bold mb-4 text-[#FFB81C]">Page Not Found</h2>
+            <p className="text-stone-600 dark:text-stone-400">
+              The Board of Directors page could not be found in WordPress.
+            </p>
+          </div>
+        </section>
       </main>
     );
   }
 
   const { members } = parseBoardContent(page.content);
 
-  // If no members found
   if (members.length === 0) {
     return (
-      <main className="min-h-screen bg-[#141414] text-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-[#1e1e1e] border border-stone-800 p-8 rounded-2xl text-center shadow-2xl">
-          <span className="text-[#FFB81C] text-xs font-bold tracking-[0.25em] uppercase block mb-3">Notice</span>
-          <h1 className="text-2xl font-black uppercase mb-3 tracking-tight">No Data Found</h1>
-          <p className="text-stone-400 text-sm mb-6 leading-relaxed">
-            Page "{page.title}" was found but no board members could be parsed.
-          </p>
-          <Link 
-            href="/" 
-            className="inline-block w-full py-3 bg-[#FFB81C] hover:bg-yellow-500 text-black text-xs font-bold tracking-widest uppercase transition-all rounded-lg text-center"
-          >
-            Back to Home
-          </Link>
-        </div>
+      <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif">
+        <header className="relative h-[40vh] flex items-end pb-16 px-6 md:px-20 overflow-hidden border-b border-black/10 dark:border-white/10">
+          <div className="relative z-10 max-w-7xl mx-auto w-full">
+            <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+              Leadership
+            </span>
+            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.85] mb-4">
+              Board of <span className="text-[#FFB81C]">Directors</span>
+            </h1>
+            <p className="text-lg md:text-xl text-stone-600 dark:text-stone-400 max-w-2xl font-light">
+              Dedicated leaders guiding our mission and vision.
+            </p>
+          </div>
+        </header>
+        
+        <section className="max-w-4xl mx-auto py-16 px-6 md:px-20 text-center">
+          <div className="bg-stone-50 dark:bg-[#2a2a2a] p-8 rounded-2xl border border-black/5 dark:border-white/5">
+            <h2 className="text-xl font-bold mb-4 text-[#FFB81C]">No Board Members Found</h2>
+            <p className="text-stone-600 dark:text-stone-400">
+              Page "{page.title}" was found but no board members could be parsed.
+            </p>
+          </div>
+        </section>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-stone-950 text-white font-sans selection:bg-[#FFB81C]/30">
+    <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif selection:bg-[#FFB81C]/30">
       
-      {/* HEADER HERO */}
-      <header className="relative py-20 px-6 border-b border-stone-900 bg-gradient-to-b from-stone-900 to-stone-950">
-        <div className="max-w-5xl mx-auto">
-          <span className="inline-block bg-[#FFB81C] text-black px-3 py-1 text-[10px] font-black uppercase tracking-[0.15em] mb-4 rounded-sm">
-            Leadership & Governance
+      {/* HERO SECTION */}
+      <header className="relative h-[40vh] flex items-end pb-16 px-6 md:px-20 overflow-hidden border-b border-black/10 dark:border-white/10 bg-gradient-to-b from-stone-50 dark:from-stone-900 to-white dark:to-[#1a1a1a]">
+        {page.featuredImageUrl && (
+          <div className="absolute inset-0 z-0">
+            <Image 
+              src={page.featuredImageUrl} 
+              alt={page.title}
+              fill
+              className="object-cover opacity-20 grayscale"
+              priority
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#1a1a1a] to-transparent" />
+          </div>
+        )}
+        
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+            Leadership
           </span>
-          <h1 className="text-4xl md:text-6xl font-extrabold uppercase tracking-tight leading-none mb-4">
-            Board <span className="text-[#FFB81C]">of Directors</span>
+          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.85] mb-4">
+            Board of <span className="text-[#FFB81C]">Directors</span>
           </h1>
-          <p className="text-base md:text-lg text-stone-400 max-w-2xl font-light leading-relaxed">
-            Restorative leaders, advocates, and practitioners guiding our mission live from WordPress.
+          <p className="text-lg md:text-xl text-stone-600 dark:text-stone-400 max-w-2xl font-light">
+            Dedicated leaders guiding our mission and vision.
           </p>
         </div>
       </header>
 
-      {/* BOARD CARDS LIST */}
-      <section className="max-w-5xl mx-auto py-16 px-6">
-        <div className="space-y-10">
-          {members.map((member, index) => {
-            const cardBgClass = member.isDarkBg 
-              ? "bg-stone-900/40 border-stone-850" 
-              : "bg-stone-900/80 border-stone-800";
+      {/* BOARD MEMBERS SECTION - Image Left, Text Right */}
+      <section className="max-w-7xl mx-auto py-16 px-6 md:px-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="space-y-12">
+            {members.map((member, index) => {
+              const isEven = index % 2 === 0;
+              const cardBg = isEven 
+                ? 'bg-stone-50 dark:bg-[#2a2a2a] border-black/5 dark:border-white/5 text-black dark:text-[#f4f4f4]' 
+                : 'bg-stone-900 dark:bg-[#0a0a0a] border-stone-800 text-white';
 
-            return (
-              <div 
-                key={index} 
-                className={`rounded-2xl border overflow-hidden shadow-xl transition-all duration-300 hover:border-stone-700 hover:translate-y-[-2px] ${cardBgClass}`}
-              >
-                <div className="flex flex-col md:flex-row gap-8 p-8 items-start">
-                  
-                  {/* Portrait Image Container */}
-                  <div className="w-full md:w-[180px] flex-shrink-0 flex justify-center md:justify-start">
-                    {member.img ? (
-                      <div className="relative w-36 h-36 md:w-full md:aspect-[3/4] rounded-xl overflow-hidden bg-stone-850 border border-stone-700 shadow-inner">
-                        <Image
-                          src={member.img}
-                          alt={member.name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 144px, 180px"
-                          unoptimized={member.img.includes('.heic')}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-36 h-36 md:w-full md:aspect-square rounded-xl bg-gradient-to-br from-[#FFB81C]/20 to-transparent flex items-center justify-center border border-dashed border-[#FFB81C]/30 flex-shrink-0">
-                        <span className="text-5xl font-black text-[#FFB81C]">
-                          {member.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bio Detail Section */}
-                  <div className="flex-grow w-full">
-                    <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">
-                      {member.name}
-                    </h2>
-                    <p className="text-[#FFB81C] font-semibold text-xs uppercase tracking-widest mb-4">
-                      {member.role}
-                    </p>
+              return (
+                <div 
+                  key={index} 
+                  className={`rounded-2xl border overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${cardBg}`}
+                >
+                  <div className="flex flex-col md:flex-row gap-8 p-8 md:p-10 items-center md:items-start">
                     
-                    <div className="leading-relaxed text-sm md:text-base text-stone-300 font-light space-y-4 whitespace-pre-line">
-                      {member.bio}
+                    {/* Image - Left Column - Larger and Uncropped */}
+                    <div className="w-full md:w-[200px] flex-shrink-0 flex justify-center">
+                      {member.img ? (
+                        <div className="relative w-48 h-48 md:w-full md:aspect-square rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 border-2 border-[#FFB81C]/20 shadow-inner">
+                          <Image
+                            src={member.img}
+                            alt={member.name}
+                            fill
+                            className="object-contain p-3"
+                            sizes="(max-width: 768px) 192px, 200px"
+                            unoptimized={member.img.includes('.heic')}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-48 h-48 md:w-full md:aspect-square rounded-2xl bg-gradient-to-br from-[#FFB81C]/20 to-[#FFB81C]/5 flex items-center justify-center border-2 border-dashed border-[#FFB81C]/30">
+                          <span className="text-6xl font-black text-[#FFB81C]">
+                            {member.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                    
+                    {/* Content - Right Column */}
+                    <div className="flex-grow w-full text-center md:text-left">
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
+                        <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
+                          {member.name}
+                        </h3>
+                        {member.role && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFB81C] bg-[#FFB81C]/10 border border-[#FFB81C]/30 px-3 py-1 rounded-full">
+                            {member.role}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className={`text-sm md:text-base leading-relaxed font-light space-y-4 whitespace-pre-line ${
+                        isEven ? 'text-stone-600 dark:text-stone-300' : 'text-stone-300'
+                      }`}>
+                        {member.bio}
+                      </div>
+                    </div>
 
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </section>
 
       {/* ACTION FOOTER */}
-      <section className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="pt-16 border-t border-stone-800 flex flex-wrap gap-8 items-center justify-center">
+      <section className="max-w-7xl mx-auto px-6 md:px-20 pb-16">
+        <div className="pt-16 border-t border-black/10 dark:border-white/10 flex flex-wrap gap-8 items-center justify-center">
           <Link 
             href="/about/staff" 
-            className="px-10 py-5 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded-lg"
+            className="px-10 py-5 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded"
           >
             Meet Our Staff
           </Link>
