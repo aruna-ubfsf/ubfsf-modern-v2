@@ -3,6 +3,58 @@ import Link from "next/link";
 import { getPageBySlug } from "@/lib/wordpress/pages";
 import { getWpImageUrl } from "@/lib/wordpress/client";
 
+// Helper function to clean HTML content and extract structured data
+function extractContentFromWordPress(content: string) {
+  const textMatches = content.match(/<p>(.*?)<\/p>/g) || [];
+  const textContent = textMatches
+    .map(p => p.replace(/<[^>]+>/g, '').trim())
+    .filter(Boolean);
+
+  const listMatches = content.match(/<li[^>]*>(.*?)<\/li>/g) || [];
+  const listItems = listMatches
+    .map(li => li.replace(/<[^>]+>/g, '').trim())
+    .filter(Boolean);
+
+  const headingMatches = content.match(/<[^>]*heading[^>]*title_suffix="([^"]*)"[^>]*>/g) || [];
+  const sections = headingMatches
+    .map(h => {
+      const match = h.match(/title_suffix="([^"]*)"/);
+      return match ? match[1] : null;
+    })
+    .filter(Boolean);
+
+  const imageMatches = content.match(/src="([^"]*\.(jpg|jpeg|png|webp))"/g) || [];
+  const imageUrls = imageMatches
+    .map(img => {
+      const match = img.match(/src="([^"]*)"/);
+      return match ? match[1] : null;
+    })
+    .filter(Boolean);
+
+  const videoMatch = content.match(/src="(https:\/\/youtu\.be\/[^"]*)"/);
+  const videoUrl = videoMatch ? videoMatch[1] : null;
+
+  const bookTitles = [];
+  const bookImages = [];
+  
+  const bookRegex = /title_suffix="([^"]*)"[^>]*>.*?src="([^"]*\.(jpg|jpeg|png))"/gs;
+  let bookMatch;
+  while ((bookMatch = bookRegex.exec(content)) !== null) {
+    bookTitles.push(bookMatch[1]);
+    bookImages.push(bookMatch[2]);
+  }
+
+  return {
+    textContent,
+    listItems,
+    sections,
+    imageUrls,
+    videoUrl,
+    bookTitles,
+    bookImages,
+  };
+}
+
 export default async function HundredStoriesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const page = await getPageBySlug("hundred-stories-project");
@@ -11,80 +63,244 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
     return <main className="p-20 min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-white">Loading...</main>;
   }
 
+  const content = page.content || '';
+  const extracted = extractContentFromWordPress(content);
+
+  // Organize extracted content
+  const heroTitle = page.title || "Hundred Stories Project";
+  const mainDescription = extracted.textContent[0] || "";
+  const givingVoiceContent = extracted.textContent.slice(1, 3).join(" ");
+  const expandingPerspectivesContent = extracted.textContent.slice(3, 5).join(" ");
+  const whyItMattersContent = extracted.textContent.slice(5, 8).join(" ");
+  const keyComponents = extracted.listItems.slice(0, 3);
+  const whyItMattersItems = extracted.listItems.slice(3, 6);
+
+  const books = [
+    { title: extracted.bookTitles[0] || 'No Rhyme or Reason', img: extracted.bookImages[0] || '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg' },
+    { title: extracted.bookTitles[1] || 'Social Justice Autobiographies', img: extracted.bookImages[1] || '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg' },
+    { title: extracted.bookTitles[2] || 'Kill the Bastard', img: extracted.bookImages[2] || '/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg' }
+  ];
+
+  // Three pillars data
+  const pillars = [
+    {
+      icon: "✍️",
+      title: "Write",
+      description: "Empowering incarcerated individuals to share their stories through a self-taught writing curriculum."
+    },
+    {
+      icon: "📚",
+      title: "Publish",
+      description: "Transforming personal narratives into published manuscripts and anthologies that reach the world."
+    },
+    {
+      icon: "🌍",
+      title: "Transform",
+      description: "Changing perspectives and inspiring solutions to systemic issues in the carceral ecosystem."
+    }
+  ];
+
   return (
-    <main className="bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] min-h-screen font-serif py-16 px-6 md:px-20 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* HERO SECTION */}
-        <header className="mb-20 text-center">
-          <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-8 text-black dark:text-white">
-            {page.title}
+    <main className="bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] min-h-screen font-serif">
+      
+      {/* HERO SECTION - Full width with gradient or solid background */}
+      <section className="relative bg-black dark:bg-[#0a0a0a] text-white py-24 md:py-32 px-6 md:px-20">
+        <div className="max-w-5xl mx-auto text-center">
+          <h1 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-6 leading-[1.1]">
+            {heroTitle}
           </h1>
-          <p className="text-xl italic text-stone-600 dark:text-stone-400 max-w-2xl mx-auto mb-12">
+          <div className="w-20 h-1 bg-[#FFB81C] mx-auto mb-8"></div>
+          <p className="text-xl md:text-2xl text-stone-300 max-w-3xl mx-auto leading-relaxed font-light">
             "Every story deserves to be heard. One Hundred Stories. One Shared Humanity."
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="mt-10 flex gap-4 justify-center flex-wrap">
             <a 
               href="https://zomedia.netlify.app/about/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="bg-black dark:bg-white text-white dark:text-black px-8 py-3 text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all"
+              className="bg-[#FFB81C] text-black px-10 py-4 text-sm font-bold uppercase tracking-wider hover:bg-[#e6a500] transition-all duration-300"
             >
               Learn More About Zo Media
             </a>
           </div>
-        </header>
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-6 md:px-20 py-16 md:py-24">
 
         {/* GIVING VOICE SECTION */}
-        <section className="grid md:grid-cols-2 gap-12 items-start mb-24">
-          <div className="prose dark:prose-invert max-w-none text-black dark:text-[#d1d1d1]">
-            <h2 className="text-2xl font-bold uppercase tracking-widest mb-6 text-[#FFB81C]">Giving Voice to the Voiceless</h2>
-            <p className="leading-relaxed">
-              The Hundred Stories Project is a groundbreaking initiative led by UBFSF in partnership with 
-              Stony Brook University and HERSTORY. This pilot program empowers incarcerated individuals 
-              to share their stories through a self-taught writing curriculum, resulting in the 
-              publication of 100 prisoner-written manuscripts and a series of anthologies.
+        <section className="grid md:grid-cols-2 gap-16 items-center mb-24">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black dark:text-white leading-tight">
+              Giving Voice to the <br />
+              <span className="text-[#FFB81C]">Voiceless</span>
+            </h2>
+            <div className="w-16 h-1 bg-[#FFB81C] mb-6"></div>
+            <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300 mb-4">
+              {givingVoiceContent || mainDescription}
+            </p>
+            {keyComponents.length > 0 && (
+              <div className="mt-6 space-y-2">
+                {keyComponents.map((item, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <span className="text-[#FFB81C] font-bold text-lg">✦</span>
+                    <span className="text-sm text-stone-700 dark:text-stone-300" dangerouslySetInnerHTML={{ __html: item }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden shadow-xl">
+            {extracted.imageUrls.length > 0 && (
+              <Image 
+                src={getWpImageUrl(extracted.imageUrls[0])} 
+                alt="Hundred Stories Bookshelf" 
+                fill 
+                className="object-cover hover:scale-105 transition-transform duration-700" 
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            )}
+          </div>
+        </section>
+
+        {/* THREE PILLARS SECTION */}
+        <section className="mb-24">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
+              Our Three Pillars
+            </h2>
+            <div className="w-16 h-1 bg-[#FFB81C] mx-auto"></div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {pillars.map((pillar, index) => (
+              <div 
+                key={index} 
+                className="bg-stone-50 dark:bg-[#222222] p-8 text-center border border-stone-200 dark:border-stone-800 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="text-5xl mb-4">{pillar.icon}</div>
+                <h3 className="text-xl font-bold mb-3 text-black dark:text-white">{pillar.title}</h3>
+                <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+                  {pillar.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* EXPANDING PERSPECTIVES WITH VIDEO */}
+        <section className="grid md:grid-cols-2 gap-16 items-center mb-24">
+          <div className="order-2 md:order-1">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black dark:text-white leading-tight">
+              Expanding Perspectives <br />
+              <span className="text-[#FFB81C]">Through Storytelling</span>
+            </h2>
+            <div className="w-16 h-1 bg-[#FFB81C] mb-6"></div>
+            <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300 mb-4">
+              {expandingPerspectivesContent}
+            </p>
+            <p className="text-sm text-stone-600 dark:text-stone-400">
+              Supported by the American Council of Learned Societies, Lenski Covey Foundation, 
+              and the Center for Changing Systems of Power at SBU.
             </p>
           </div>
-          <div className="relative aspect-video w-full border border-black/10 dark:border-white/10">
-            <Image 
-              src={getWpImageUrl("/wp-content/uploads/2023/10/books-shelf.jpg")} 
-              alt="Hundred Stories Bookshelf" 
-              fill 
-              className="object-cover" 
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
+          <div className="relative aspect-video w-full bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden shadow-xl order-1 md:order-2">
+            {extracted.videoUrl ? (
+              <iframe
+                src={extracted.videoUrl.replace('youtu.be/', 'www.youtube.com/embed/')}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-stone-500 dark:text-stone-400">Video Coming Soon</p>
+              </div>
+            )}
           </div>
         </section>
 
         {/* FEATURED WORKS */}
         <section className="mb-24">
-          <h2 className="text-2xl font-black uppercase tracking-tighter mb-12 text-black dark:text-white">Featured Works</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
+              Featured Works
+            </h2>
+            <p className="text-stone-600 dark:text-stone-400 max-w-2xl mx-auto">
+              by Ivan Kilgore, UBFSF Founder
+            </p>
+            <div className="w-16 h-1 bg-[#FFB81C] mx-auto mt-4"></div>
+          </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { title: 'No Rhyme or Reason', img: '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg' },
-              { title: 'Social Justice Autobiographies', img: '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg' },
-              { title: 'Kill the Bastard', img: '/wp-content/uploads/2024/10/kill_the_bastard-scaled-1.jpg' }
-            ].map((book) => (
-              <div key={book.title} className="bg-stone-100 dark:bg-[#2a2a2a] p-4 border border-black/5 dark:border-white/5">
-                <div className="relative aspect-[2/3] bg-stone-200 dark:bg-[#333333] mb-4">
+            {books.map((book) => (
+              <div 
+                key={book.title} 
+                className="group bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-800 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+              >
+                <div className="relative aspect-[2/3] bg-stone-100 dark:bg-[#2a2a2a] overflow-hidden">
                   <Image 
                     src={getWpImageUrl(book.img)} 
                     alt={book.title} 
                     fill 
-                    className="object-cover" 
+                    className="object-cover group-hover:scale-105 transition-transform duration-700" 
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
-                <p className="font-bold text-sm text-black dark:text-white">{book.title}</p>
+                <div className="p-6">
+                  <p className="font-bold text-lg text-black dark:text-white mb-2">{book.title}</p>
+                  <a 
+                    href="https://zomediaproductions.com/store/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-[#FFB81C] font-semibold hover:text-black dark:hover:text-white transition-colors inline-flex items-center gap-2"
+                  >
+                    Purchase
+                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                  </a>
+                </div>
               </div>
             ))}
           </div>
         </section>
-        
+
+        {/* WHY THIS PROJECT MATTERS */}
+        <section className="bg-stone-50 dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-800 p-12 md:p-16 mb-24">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black dark:text-white">
+              Why This Project <span className="text-[#FFB81C]">Matters</span>
+            </h2>
+            <div className="w-16 h-1 bg-[#FFB81C] mx-auto mb-8"></div>
+            <p className="text-base leading-relaxed text-stone-700 dark:text-stone-300 mb-8">
+              {whyItMattersContent}
+            </p>
+            {whyItMattersItems.length > 0 && (
+              <div className="grid sm:grid-cols-3 gap-6 text-left">
+                {whyItMattersItems.map((item, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <span className="text-[#FFB81C] font-bold text-xl flex-shrink-0 mt-1">✦</span>
+                    <span className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: item }} />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-10 pt-10 border-t border-stone-200 dark:border-stone-800">
+              <p className="text-stone-600 dark:text-stone-400">
+                <span className="italic">
+                  Submit your inquiry or learn more by filling out the form below.
+                </span>
+              </p>
+              <a 
+                href="https://ubfsf.org/contact/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block mt-4 bg-[#FFB81C] text-black px-10 py-4 text-sm font-bold uppercase tracking-wider hover:bg-[#e6a500] transition-all duration-300"
+              >
+                Contact Us
+              </a>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   );
 }
-
-
