@@ -5,16 +5,19 @@ import { getWpImageUrl } from "@/lib/wordpress/client";
 
 // Helper function to clean HTML content and extract structured data
 function extractContentFromWordPress(content: string) {
+  // Extract the main text content
   const textMatches = content.match(/<p>(.*?)<\/p>/g) || [];
   const textContent = textMatches
     .map(p => p.replace(/<[^>]+>/g, '').trim())
     .filter(Boolean);
 
+  // Extract list items
   const listMatches = content.match(/<li[^>]*>(.*?)<\/li>/g) || [];
   const listItems = listMatches
     .map(li => li.replace(/<[^>]+>/g, '').trim())
     .filter(Boolean);
 
+  // Extract headings/sections
   const headingMatches = content.match(/<[^>]*heading[^>]*title_suffix="([^"]*)"[^>]*>/g) || [];
   const sections = headingMatches
     .map(h => {
@@ -23,6 +26,7 @@ function extractContentFromWordPress(content: string) {
     })
     .filter(Boolean);
 
+  // Extract image URLs
   const imageMatches = content.match(/src="([^"]*\.(jpg|jpeg|png|webp))"/g) || [];
   const imageUrls = imageMatches
     .map(img => {
@@ -31,13 +35,16 @@ function extractContentFromWordPress(content: string) {
     })
     .filter(Boolean);
 
+  // Extract video URL
   const videoMatch = content.match(/src="(https:\/\/youtu\.be\/[^"]*)"/);
   const videoUrl = videoMatch ? videoMatch[1] : null;
 
-  const bookTitles = [];
-  const bookImages = [];
+  // Extract book information - Fix: Remove the 's' flag
+  const bookTitles: string[] = [];
+  const bookImages: string[] = [];
   
-  const bookRegex = /title_suffix="([^"]*)"[^>]*>.*?src="([^"]*\.(jpg|jpeg|png))"/gs;
+  // Use a more compatible regex approach
+  const bookRegex = /title_suffix="([^"]*)"[^>]*>[\s\S]*?src="([^"]*\.(jpg|jpeg|png))"/g;
   let bookMatch;
   while ((bookMatch = bookRegex.exec(content)) !== null) {
     bookTitles.push(bookMatch[1]);
@@ -66,15 +73,28 @@ export default async function HundredStoriesPage({ params }: { params: Promise<{
   const content = page.content || '';
   const extracted = extractContentFromWordPress(content);
 
-  // Organize extracted content
+  // Organize extracted content into sections
   const heroTitle = page.title || "Hundred Stories Project";
+  
+  // Get the main description (first paragraph)
   const mainDescription = extracted.textContent[0] || "";
+  
+  // Get the "Giving Voice to the Voiceless" section content
   const givingVoiceContent = extracted.textContent.slice(1, 3).join(" ");
+  
+  // Get the "Expanding Perspectives" section content
   const expandingPerspectivesContent = extracted.textContent.slice(3, 5).join(" ");
+  
+  // Get the "Why This Project Matters" content
   const whyItMattersContent = extracted.textContent.slice(5, 8).join(" ");
+  
+  // Get key components from list items
   const keyComponents = extracted.listItems.slice(0, 3);
+  
+  // Get why it matters list items
   const whyItMattersItems = extracted.listItems.slice(3, 6);
 
+  // Get book data - use extracted book titles and images
   const books = [
     { title: extracted.bookTitles[0] || 'No Rhyme or Reason', img: extracted.bookImages[0] || '/wp-content/uploads/2024/10/no_rhyme_no_reason-1.jpg' },
     { title: extracted.bookTitles[1] || 'Social Justice Autobiographies', img: extracted.bookImages[1] || '/wp-content/uploads/2024/10/socialjusticeautobiographies_cover-scaled-1.jpg' },
