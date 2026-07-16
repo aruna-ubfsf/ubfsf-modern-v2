@@ -1,3 +1,4 @@
+// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -6,12 +7,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'ubfsf.org',
-        pathname: '**',
+        pathname: '/wp-content/uploads/**',
       },
       {
         protocol: 'https',
-        hostname: 'i0.wp.com', // For Jetpack images
-        pathname: '**',
+        hostname: 'i0.wp.com',
+        pathname: '/ubfsf.org/**', // For Jetpack CDN images
       },
     ],
   },

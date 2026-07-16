@@ -1,0 +1,310 @@
+import Image from "next/image";
+import Link from "next/link";
+import { getPageBySlug } from "@/lib/wordpress/pages";
+import { getWpImageUrl } from "@/lib/wordpress/client";
+
+interface AdvisoryMember {
+  name: string;
+  role: string;
+  bio: string;
+  image: string;
+}
+
+// Cleans up WordPress escapes, JSON slashes, and Divi's custom HTML entity quotes
+function sanitizeString(str: string): string {
+  return str
+    .replace(/\\"/g, '"')
+    .replace(/\\'/g, "'")
+    .replace(/\\n/g, '\n')
+    .replace(/\\t/g, ' ')
+    // Replace all variations of fancy quotes with standard double quotes
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8212;/g, "—")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8243;/g, '"')
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
+    .replace(/&#038;/g, "&")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ");
+}
+
+function parseAdvisoryContent(content: string) {
+  const advisoryMembers: AdvisoryMember[] = [];
+  const cleanContent = sanitizeString(content);
+
+  // Split content by sections first to correctly track Roles & Sections
+  const sections = cleanContent.split(/\[et_pb_section/g);
+
+  for (const section of sections) {
+    if (!section.trim()) continue;
+
+    // 1. Determine the active role for members in this section
+    let sectionRole = "Board Advisor";
+
+    // Extract section heading or label if it dictates a role
+    const sectionHeadingMatch = section.match(/dg_adh_heading[^\]]*title_prefix="([^"]+)"/);
+    if (sectionHeadingMatch) {
+      const headingVal = sectionHeadingMatch[1].trim();
+      if (!['staff & volunteers', 'board of advisor', 'board of advisors'].includes(headingVal.toLowerCase())) {
+        sectionRole = headingVal;
+      }
+    } else {
+      // Fallback: check section admin label
+      const sectionAdminMatch = section.match(/admin_label="([^"]+)"/);
+      if (sectionAdminMatch) {
+        const labelVal = sectionAdminMatch[1].trim();
+        if (!['staff & volunteers header', 'chief development officer'].includes(labelVal.toLowerCase())) {
+          sectionRole = labelVal;
+        }
+      }
+    }
+
+    // Split the section into rows to isolate individual profiles
+    const rows = section.split(/\[et_pb_row/g);
+
+    for (const row of rows) {
+      if (!row.trim()) continue;
+
+      // 2. Extract Biography Text inside this profile row
+      const bioTextMatch = row.match(/\[et_pb_text[^\]]*\]([\s\S]*?)\[\/et_pb_text\]/);
+      let bio = '';
+      if (bioTextMatch) {
+        bio = bioTextMatch[1]
+          .replace(/<div[^>]*>/g, '')
+          .replace(/<\/div>/g, '\n')
+          .replace(/<p[^>]*>/g, '')
+          .replace(/<\/p>/g, '\n\n')
+          .replace(/<span[^>]*>/g, '')
+          .replace(/<\/span>/g, '')
+          .replace(/<[^>]*>/g, '') // Strip residual tags safely
+          .trim();
+      }
+
+      // If no bio exists, this is a header spacer/helper row—skip it!
+      if (!bio) continue;
+
+      // 3. Extract Image Source
+      const imgMatch = row.match(/src="([^"]+)"/) || row.match(/src='([^']+)'/);
+      const image = imgMatch ? getWpImageUrl(imgMatch[1]) : '';
+
+      // 4. Extract Member Name
+      let name = '';
+      const headingMatches = [...row.matchAll(/dg_adh_heading[^\]]*title_prefix="([^"]+)"/g)];
+      const headings = headingMatches.map(m => m[1].trim());
+
+      const genericRoles = [
+        'board member', 
+        'board of advisor', 
+        'board of advisors', 
+        'board of directors', 
+        'staff & volunteers', 
+        'staff', 
+        'volunteer', 
+        'director', 
+        'member', 
+        'officer',
+        'vice chairman'
+      ];
+
+      if (headings.length > 0) {
+        // Filter out structural headings to find the actual person's name
+        const nameHeading = headings.find(h => 
+          !genericRoles.some(role => h.toLowerCase().includes(role))
+        );
+        name = nameHeading || headings[headings.length - 1];
+      }
+
+      // Fallback: Use admin_label if name wasn't found in a heading shortcode
+      if (!name) {
+        const adminLabelMatch = row.match(/admin_label="([^"]+)"/);
+        if (adminLabelMatch && !['row', 'section'].includes(adminLabelMatch[1].toLowerCase())) {
+          name = adminLabelMatch[1].trim();
+        }
+      }
+
+      if (!name) continue;
+
+      advisoryMembers.push({
+        name,
+        role: sectionRole,
+        bio,
+        image
+      });
+    }
+  }
+
+  return { advisoryMembers };
+}
+
+export default async function BoardAdvisoryPage() {
+  const slugCandidates = ['board-of-advisory', 'board-advisory', 'advisory-board'];
+  let page = null;
+
+  for (const slug of slugCandidates) {
+    page = await getPageBySlug(slug);
+    if (page) break;
+  }
+
+  // Fallback UI if page doesn't exist
+  if (!page) {
+    return (
+      <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-sans">
+        <header className="relative h-[40vh] flex items-end pb-16 px-6 md:px-20 overflow-hidden border-b border-black/10 dark:border-white/10">
+          <div className="relative z-10 max-w-7xl mx-auto w-full">
+            <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+              Leadership
+            </span>
+            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.85] mb-4">
+              Board of <span className="text-[#FFB81C]">Advisory</span>
+            </h1>
+            <p className="text-lg md:text-xl text-stone-600 dark:text-stone-400 max-w-2xl font-light">
+              Distinguished advisors guiding our mission and vision.
+            </p>
+          </div>
+        </header>
+        
+        <section className="max-w-4xl mx-auto py-16 px-6 md:px-20 text-center">
+          <div className="bg-stone-50 dark:bg-[#2a2a2a] p-8 rounded-2xl border border-black/5 dark:border-white/5">
+            <h2 className="text-xl font-bold mb-4 text-[#FFB81C]">Page Not Found</h2>
+            <p className="text-stone-600 dark:text-stone-400">
+              The Board of Advisory page could not be found in WordPress.
+            </p>
+            <p className="text-sm text-stone-500 dark:text-stone-500 mt-2">
+              Please check the slug in WordPress.
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  const { advisoryMembers } = parseAdvisoryContent(page.content || '');
+
+  return (
+    <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-sans selection:bg-[#FFB81C]/30">
+      
+      {/* HERO SECTION */}
+      <header className="relative h-[40vh] flex items-end pb-16 px-6 md:px-20 overflow-hidden border-b border-black/10 dark:border-white/10 bg-gradient-to-b from-stone-50 dark:from-stone-900 to-white dark:to-[#1a1a1a]">
+        {page.featuredImageUrl && (
+          <div className="absolute inset-0 z-0">
+            <Image 
+              src={page.featuredImageUrl} 
+              alt={page.title}
+              fill
+              className="object-cover opacity-20 grayscale"
+              priority
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#1a1a1a] to-transparent" />
+          </div>
+        )}
+        
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+            Leadership
+          </span>
+          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.85] mb-4">
+            Board of <span className="text-[#FFB81C]">Advisory</span>
+          </h1>
+          <p className="text-lg md:text-xl text-stone-600 dark:text-stone-400 max-w-2xl font-light">
+            Distinguished advisors guiding our mission and vision.
+          </p>
+        </div>
+      </header>
+
+      {/* ADVISORY MEMBERS SECTION */}
+      <section className="max-w-7xl mx-auto py-16 px-6 md:px-20">
+        <div className="max-w-4xl mx-auto">
+          
+          {advisoryMembers.length === 0 ? (
+            <div className="bg-stone-50 dark:bg-[#2a2a2a] p-12 text-center rounded-2xl border border-black/5 dark:border-white/5">
+              <h2 className="text-xl font-bold mb-4 text-[#FFB81C]">No Advisory Members Found</h2>
+              <p className="text-stone-600 dark:text-stone-400 mb-4">
+                Successfully parsed the WordPress page but could not extract active profile layouts.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-12">
+              {advisoryMembers.map((member, index) => {
+                const isEven = index % 2 === 0;
+                const cardBg = isEven 
+                  ? 'bg-stone-50 dark:bg-[#2a2a2a] border-black/5 dark:border-white/5 text-black dark:text-[#f4f4f4]' 
+                  : 'bg-stone-900 dark:bg-[#0a0a0a] border-stone-800 text-white';
+
+                return (
+                  <div 
+                    key={index} 
+                    className={`rounded-2xl border overflow-hidden shadow-md transition-all duration-300 hover:scale-[1.01] ${cardBg}`}
+                  >
+                    <div className="flex flex-col md:flex-row gap-8 p-8 items-start">
+                      
+                      {/* Image - Left Column */}
+                      <div className="w-full md:w-[160px] flex-shrink-0 flex justify-center md:justify-start">
+                        {member.image ? (
+                          <div className="relative w-36 h-36 md:w-full md:aspect-[3/4] rounded-xl overflow-hidden bg-stone-200 dark:bg-stone-800 border border-black/10 dark:border-white/10 shadow-inner">
+                            <Image
+                              src={member.image}
+                              alt={member.name}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 144px, 160px"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-36 h-36 md:w-full md:aspect-square rounded-xl bg-gradient-to-br from-[#FFB81C]/20 to-transparent flex items-center justify-center border border-dashed border-[#FFB81C]/30 flex-shrink-0">
+                            <span className="text-5xl font-black text-[#FFB81C]">
+                              {member.name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Bio Content - Right Column */}
+                      <div className="flex-grow w-full">
+                        <div className="flex flex-wrap items-baseline gap-3 mb-3">
+                          <h3 className="text-2xl md:text-3xl font-black tracking-tight">{member.name}</h3>
+                          {member.role && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFB81C] border border-[#FFB81C]/30 px-2.5 py-0.5 rounded-full">
+                              {member.role}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className={`text-sm md:text-base leading-relaxed font-light space-y-4 whitespace-pre-line ${
+                          isEven ? 'text-stone-600 dark:text-stone-300' : 'text-stone-300'
+                        }`}>
+                          {member.bio}
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </div>
+      </section>
+      
+      {/* ACTION FOOTER */}
+      <section className="max-w-7xl mx-auto px-6 md:px-20 pb-16">
+        <div className="pt-16 border-t border-black/10 dark:border-white/10 flex flex-wrap gap-8 items-center justify-center">
+          <Link 
+            href="/about/staff" 
+            className="px-10 py-5 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded"
+          >
+            Meet Our Staff
+          </Link>
+          <p className="text-stone-500 font-bold uppercase tracking-widest text-[10px]">
+            Learn more about the people behind UBFSF.
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}

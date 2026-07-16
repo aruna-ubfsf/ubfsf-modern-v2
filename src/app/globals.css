@@ -5,6 +5,7 @@
   --color-ubfsf-gold: #D4A017;
   --color-ubfsf-zinc: #1A1A1A;
   --font-sans: "Open Sans", ui-sans-serif, system-ui;
+  --font-serif: "Montserrat", ui-serif, Georgia;
 }
 
 @layer base {
@@ -13,7 +14,10 @@
     --background: #ffffff;
     --foreground: #09090b;
     --muted: #71717a;
-    --border: #e4e4e7;
+    --border: #f1f1f1;
+    --card-bg: #f9f9f9;
+    --selection-bg: #D4A017;
+    --selection-text: #000000;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -22,7 +26,8 @@
       --background: #09090b;
       --foreground: #fafafa;
       --muted: #a1a1aa;
-      --border: #27272a;
+      --border: #1a1a1a;
+      --card-bg: #111113;
     }
   }
 
@@ -33,11 +38,22 @@
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
+
+  /* Professional Selection Color */
+  ::selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-black uppercase tracking-tighter leading-[0.9];
+    color: var(--foreground);
+  }
 }
 
 /* 
-  WORDPRESS CONTENT BRIDGE 
-  This ensures the book description text is readable in both modes.
+  WORDPRESS CONTENT BRIDGE (Senior Editorial Layout)
+  This maps raw HTML strings to a high-end magazine aesthetic.
 */
 .prose {
   @apply max-w-none;
@@ -45,6 +61,8 @@
   --tw-prose-headings: var(--foreground);
   --tw-prose-links: var(--color-ubfsf-gold);
   --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--color-ubfsf-gold);
+  --tw-prose-bullets: var(--color-ubfsf-gold);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,6 +71,27 @@
   }
 }
 
+/* Magazine "Lead" Paragraph styling */
+.prose > p:first-of-type {
+  @apply text-xl md:text-2xl font-medium leading-relaxed text-zinc-500 dark:text-zinc-400 mb-12;
+}
+
+/* High-End Blockquote Styling */
+.prose blockquote {
+  @apply border-l-4 border-ubfsf-gold bg-zinc-50 dark:bg-zinc-900/50 p-8 italic font-serif text-2xl !not-italic shadow-sm;
+}
+
+/* Content Images */
 .prose img {
-  @apply rounded-xl shadow-2xl border border-[var(--border)] my-12;
+  @apply rounded-2xl shadow-2xl border border-[var(--border)] my-16 hover:scale-[1.01] transition-transform duration-500;
+}
+
+/* Clean Links */
+.prose a {
+  @apply no-underline font-bold border-b-2 border-transparent hover:border-ubfsf-gold transition-all pb-0.5;
+}
+
+/* Fix for WordPress Video Embeds */
+.prose iframe, .prose video {
+  @apply w-full aspect-video rounded-xl shadow-2xl my-12 border border-[var(--border)];
 }
