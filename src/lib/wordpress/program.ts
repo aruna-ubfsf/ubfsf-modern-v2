@@ -1,3 +1,5 @@
+// src/lib/wordpress/program.ts
+
 import { API_URL, getAuthHeader, cleanWPContent } from './client';
 
 export async function getPrograms() {

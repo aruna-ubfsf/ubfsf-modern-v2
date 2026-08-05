@@ -2,7 +2,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getPageBySlug } from "@/lib/wordpress/pages";
-import { getWpImageUrl } from "@/lib/wordpress/client";
 
 interface Book {
   title: string;
@@ -11,7 +10,8 @@ interface Book {
 }
 
 function parseIvanContent(content: string) {
-  const cleanContent = content
+  // 1. Decode HTML entities
+  let html = content
     .replace(/&#8220;/g, '"')
     .replace(/&#8221;/g, '"')
     .replace(/&#8217;/g, "'")
@@ -24,229 +24,172 @@ function parseIvanContent(content: string) {
   let role = "Author, Activist, and Founder of UBFSF";
   let bio = "";
   let books: Book[] = [];
-  let messageTitle = "";
   let messageContent = "";
   let videoUrl = "";
   let imageUrl = "";
 
-  // Extract image
-  const imgMatch = cleanContent.match(/\[et_pb_image[^\]]*src=["']([^"']+)["']/);
+  // 2. Extract Headshot Image (Direct HTML tag)
+  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
   if (imgMatch) {
-    imageUrl = getWpImageUrl(imgMatch[1]);
+    imageUrl = imgMatch[1];
+    // ⭐️ CRITICAL FIX: Clean the URL before giving it to Next.js Image
+    imageUrl = imageUrl.replace(/&amp;/g, '&');
   }
 
-  // Extract name and role from heading
-  const nameMatch = cleanContent.match(/title_prefix=["']([^"']+)["']/);
-  if (nameMatch) {
-    name = nameMatch[1];
-  }
+  // 3. Extract Name and Role
+  const nameMatch = html.match(/title_prefix=["']([^"']+)["']/i);
+  if (nameMatch) name = nameMatch[1];
 
-  const roleMatch = cleanContent.match(/title_suffix=["']([^"']+)["']/);
-  if (roleMatch) {
-    role = roleMatch[1].replace(/^\|/, '').trim();
-  }
+  const roleMatch = html.match(/title_suffix=["']([^"']+)["']/i);
+  if (roleMatch) role = roleMatch[1].replace(/^\|/, '').trim();
 
-  // Extract bio from text blocks
-  const textMatches = cleanContent.match(/\[et_pb_text[^\]]*\]([\s\S]*?)\[\/et_pb_text\]/g) || [];
-  let bioTexts: string[] = [];
-
-  for (const textMatch of textMatches) {
-    const text = textMatch
-      .replace(/\[et_pb_text[^\]]*\]/, '')
-      .replace(/\[\/et_pb_text\]/, '')
-      .replace(/<[^>]*>/g, '')
-      .replace(/&#822[01];/g, '"')
-      .replace(/&#8217;/g, "'")
-      .replace(/&#8211;/g, "–")
-      .replace(/&#038;/g, "&")
-      .replace(/&amp;/g, "&")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    if (text && text.length > 50) {
-      bioTexts.push(text);
-    }
-  }
-
-  bio = bioTexts.slice(0, 2).join('\n\n');
-
-  // Extract message section
-  const messageMatch = cleanContent.match(/A Message from Ivan[\s\S]*?<p>([\s\S]*?)<\/p>/);
-  if (messageMatch) {
-    messageTitle = "A Message from Ivan";
-    messageContent = messageMatch[1]
-      .replace(/<[^>]*>/g, '')
-      .replace(/&#822[01];/g, '"')
-      .replace(/&#8217;/g, "'")
-      .replace(/&#8211;/g, "–")
-      .replace(/&#038;/g, "&")
-      .replace(/&amp;/g, "&")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  // Extract video
-  const videoMatch = cleanContent.match(/\[et_pb_video[^\]]*src="([^"]+)"[^\]]*\]/);
-  if (videoMatch) {
-    videoUrl = videoMatch[1];
-    if (videoUrl.includes('watch?v=')) {
-      const id = videoUrl.split('v=')[1]?.split('&')[0];
-      videoUrl = `https://www.youtube.com/embed/${id}`;
-    } else if (videoUrl.includes('youtu.be')) {
-      const id = videoUrl.split('/').pop();
-      videoUrl = `https://www.youtube.com/embed/${id}`;
-    }
-  }
-
-  // Extract books - look for images with URLs (Amazon links)
-  const bookRegex = /\[et_pb_image[^\]]*src=["']([^"']+)["'][^\]]*url=["']([^"']+)["'][^\]]*\]/g;
-  let bookMatch;
+  // 4. Extract Bio
+  const bioSection = html.match(/title_suffix=["'][^"']+["'][\s\S]*?(?=A Message from Ivan)/i)?.[0] || "";
+  const cleanBio = bioSection
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/&amp;/g, '&')
+    .trim();
   
+  const sentences = cleanBio.split(/(?<=\.)\s+/);
+  let formattedBio = [];
+  let currentParagraph = "";
+  
+  for (const sentence of sentences) {
+    if (sentence.includes("published four impactful books") || 
+        sentence.includes("His works are required reading") ||
+        sentence.includes("Ivan’s impact extends")) {
+      if (currentParagraph) formattedBio.push(currentParagraph.trim());
+      currentParagraph = sentence + " ";
+    } else {
+      currentParagraph += sentence + " ";
+    }
+  }
+  if (currentParagraph) formattedBio.push(currentParagraph.trim());
+  bio = formattedBio.join("\n\n");
+
+  // 5. Extract Video URL
+  const videoMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  if (videoMatch) {
+    let vUrl = videoMatch[1];
+    if (vUrl.includes('watch?v=')) {
+      const id = vUrl.split('v=')[1]?.split('&')[0];
+      vUrl = `https://www.youtube.com/embed/${id}`;
+    } else if (vUrl.includes('youtu.be')) {
+      const id = vUrl.split('/').pop();
+      vUrl = `https://www.youtube.com/embed/${id}`;
+    }
+    videoUrl = vUrl;
+  }
+
+  // 6. Extract Books
+  const bookRegex = /<a[^>]+href=["']([^"']+)["'][^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/gi;
+  let bookMatch;
   const bookTitles = [
     "Domestic Genocide: The Institutionalization of Society",
-    "My Comrades' Thoughts on Black Lives Matter: A Collection of Essays & Poems",
+    "My Comrades' Thoughts on Black Lives Matter",
     "Mayhem, Murder & Magnificence: A Memoir",
     "King: The Early Years"
   ];
   
-  const fallbackUrls = [
-    "https://www.amazon.com/Domestic-Genocide-Institutionalization-Ivan-Kilgore/dp/1494485729",
-    "https://www.amazon.com/Comrades-Thoughts-Black-Lives-Matter-ebook/dp/B0CW19149J",
-    "https://www.amazon.com/Mayhem-Murder-Magnificence-Ivan-Kilgore-ebook/dp/B084V3JS14",
-    "https://www.amazon.com/King-Early-Years-Ivan-Kilgore/dp/1074457838"
-  ];
-  
-  let bookIndex = 0;
-  while ((bookMatch = bookRegex.exec(cleanContent)) !== null) {
-    const img = getWpImageUrl(bookMatch[1]);
-    const url = bookMatch[2];
-    
-    if (bookIndex < bookTitles.length) {
+  let i = 0;
+  while ((bookMatch = bookRegex.exec(html)) !== null && i < 4) {
+    if (bookMatch[2]) {
+      let imgSrc = bookMatch[2].replace(/&amp;/g, '&'); // ⭐️ Clean the book URL too
       books.push({
-        title: bookTitles[bookIndex],
-        image: img,
-        url: url || fallbackUrls[bookIndex]
+        title: bookTitles[i] || `Book ${i + 1}`,
+        image: imgSrc,
+        url: bookMatch[1]
       });
-      bookIndex++;
+      i++;
     }
   }
 
-  // If no books were extracted, use fallback data
-  if (books.length === 0) {
-    // Try to find images without URLs
-    const imageOnlyRegex = /\[et_pb_image[^\]]*src=["']([^"']+)["'][^\]]*\]/g;
-    let imgOnlyMatch;
-    let imgIndex = 0;
-    
-    while ((imgOnlyMatch = imageOnlyRegex.exec(cleanContent)) !== null && imgIndex < bookTitles.length) {
-      const img = getWpImageUrl(imgOnlyMatch[1]);
-      // Skip if this is the profile image
-      if (img !== imageUrl) {
-        books.push({
-          title: bookTitles[imgIndex],
-          image: img,
-          url: fallbackUrls[imgIndex]
-        });
-        imgIndex++;
-      }
-    }
+  // 7. Extract Volunteer Message
+  const messageMatch = html.match(/A Message from Ivan[\s\S]*?<p>([\s\S]*?)<\/p>/i);
+  if (messageMatch) {
+    messageContent = messageMatch[1]
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
-  return {
-    name,
-    role,
-    bio,
-    books,
-    messageTitle,
-    messageContent,
-    videoUrl,
-    imageUrl
-  };
+  return { name, role, bio, books, messageContent, videoUrl, imageUrl };
 }
 
 export default async function IvanKilgorePage() {
   const page = await getPageBySlug('ivan-kilgore');
 
-  if (!page) {
-    return (
-      <main className="min-h-screen bg-white dark:bg-[#1a1a1a] flex items-center justify-center">
-        <div className="animate-pulse text-gray-400">Loading...</div>
-      </main>
-    );
-  }
+  if (!page) return <div className="p-10 text-center">Founder page not found.</div>;
 
-  const {
-    name,
-    role,
-    bio,
-    books,
-    messageTitle,
-    messageContent,
-    videoUrl,
-    imageUrl
-  } = parseIvanContent(page.content);
+  const { name, role, bio, books, messageContent, videoUrl, imageUrl } = parseIvanContent(page.content);
 
   return (
-    <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif">
+    <main className="min-h-screen bg-white text-black font-sans">
       
-      {/* HERO / PROFILE SECTION */}
-      <header className="relative py-16 px-6 md:px-20 border-b border-black/10 dark:border-white/10">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-12 items-start">
-            {/* Image - Using object-contain to prevent cropping */}
+      {/* 1. HERO / PROFILE SECTION */}
+      <header className="max-w-7xl mx-auto px-6 md:px-20 py-16 md:py-24">
+        <div className="grid md:grid-cols-3 gap-12 items-start">
+          {/* Image */}
+          <div className="md:col-span-1 flex justify-center md:justify-start">
             {imageUrl && (
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-xl">
+              <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden shadow-2xl border-4 border-[#FFB81C]/20">
                 <Image
                   src={imageUrl}
                   alt={name}
                   fill
-                  className="object-contain"
+                  className="object-cover"
                   priority
-                  sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
             )}
-            
-            {/* Name and Bio */}
-            <div className="md:col-span-2">
-              <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+          </div>
+          
+          {/* Name and Bio */}
+          <div className="md:col-span-2 space-y-6">
+            <div>
+              <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">
                 Founder
               </span>
-              <h1 className="text-4xl md:text-5xl font-bold mb-2">{name}</h1>
-              <p className="text-[#FFB81C] font-semibold text-lg mb-6">{role}</p>
-              
-              {bio && (
-                <div className="text-stone-600 dark:text-stone-400 leading-relaxed space-y-4">
-                  {bio.split('\n').map((paragraph, i) => (
-                    paragraph.trim() && <p key={i}>{paragraph.trim()}</p>
-                  ))}
-                </div>
-              )}
+              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-2">{name}</h1>
+              <p className="text-[#FFB81C] font-semibold text-lg md:text-xl">{role}</p>
+            </div>
+            
+            <div className="prose prose-lg max-w-none text-stone-700 leading-relaxed space-y-6">
+              {bio.split('\n\n').map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
             </div>
           </div>
         </div>
       </header>
 
-      {/* A MESSAGE FROM IVAN - Black Section */}
+      {/* 2. A MESSAGE FROM IVAN & VIDEO */}
       {(messageContent || videoUrl) && (
-        <section className="bg-black dark:bg-[#0a0a0a] text-white py-16 px-6 md:px-20">
-          <div className="max-w-4xl mx-auto">
-            {messageTitle && (
-              <h2 className="text-3xl md:text-4xl font-bold mb-2 text-[#FFB81C]">
-                {messageTitle}
+        <section className="bg-[#1a1a1a] text-white py-20 px-6 md:px-20">
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            {/* Text */}
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#FFB81C]">
+                A Message from Ivan
               </h2>
-            )}
-            
-            {messageContent && (
-              <div className="text-white/80 leading-relaxed space-y-4 mb-8">
-                {messageContent.split('\n').map((paragraph, i) => (
-                  paragraph.trim() && <p key={i}>{paragraph.trim()}</p>
-                ))}
+              <div className="text-stone-300 leading-relaxed space-y-4 text-lg">
+                <p>{messageContent}</p>
+                <p className="mt-4">
+                  <Link 
+                    href="https://ubfsf.org/volunteer-opportunities/" 
+                    target="_blank"
+                    className="inline-block bg-[#FFB81C] text-black px-8 py-3 text-xs font-bold uppercase tracking-widest hover:bg-yellow-500 transition-all rounded"
+                  >
+                    Apply Today &rarr;
+                  </Link>
+                </p>
               </div>
-            )}
-            
+            </div>
+
+            {/* Video */}
             {videoUrl && (
-              <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/5 dark:bg-white/5 border-2 border-[#FFB81C]">
+              <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border-2 border-[#FFB81C]/50">
                 <iframe
                   src={videoUrl}
                   title="Ivan Kilgore Message"
@@ -260,45 +203,45 @@ export default async function IvanKilgorePage() {
         </section>
       )}
 
-      {/* LITERATURE / BOOKS SECTION */}
+      {/* 3. LITERATURE / BOOKS GRID */}
       {books.length > 0 && (
-        <section className="py-16 px-6 md:px-20">
+        <section className="py-20 px-6 md:px-20 bg-stone-50">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center border-b border-black/10 dark:border-white/10 pb-6">
-              Literature
-            </h2>
-            <p className="text-stone-600 dark:text-stone-400 text-center max-w-3xl mx-auto mb-12">
-              Ivan Kilgore, a prolific author and activist, has published four influential books. 
-              His writings have been adapted into Emmy-nominated films, incorporated into university 
-              curricula worldwide, and utilized by advocacy organizations across the United States.
-            </p>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-4">
+                Literature
+              </h2>
+              <p className="text-stone-600 max-w-2xl mx-auto text-lg">
+                Ivan Kilgore has published four influential books, adapted into Emmy-nominated films and incorporated into university curricula worldwide.
+              </p>
+            </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {books.map((book, index) => (
                 <a
                   key={index}
                   href={book.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group bg-stone-50 dark:bg-[#2a2a2a] rounded-2xl overflow-hidden border border-black/5 dark:border-white/5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-black/5"
                 >
-                  <div className="relative aspect-[2/3] bg-stone-100 dark:bg-stone-800">
+                  <div className="relative aspect-[2/3] bg-white p-4">
                     {book.image && (
                       <Image
                         src={book.image}
                         alt={book.title}
                         fill
-                        className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                        className="object-contain group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 768px) 50vw, 25vw"
                       />
                     )}
                   </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold leading-tight group-hover:text-[#FFB81C] transition-colors line-clamp-3">
+                  <div className="p-6 border-t border-black/5">
+                    <h3 className="text-sm font-bold leading-tight line-clamp-2 group-hover:text-[#FFB81C] transition-colors">
                       {book.title}
                     </h3>
-                    <span className="inline-block mt-2 text-xs text-[#FFB81C] font-bold uppercase tracking-wider">
-                      Buy on Amazon →
+                    <span className="inline-block mt-3 text-[10px] text-[#FFB81C] font-bold uppercase tracking-wider">
+                      Buy on Amazon &rarr;
                     </span>
                   </div>
                 </a>
@@ -308,12 +251,12 @@ export default async function IvanKilgorePage() {
         </section>
       )}
       
-      {/* ACTION FOOTER */}
-      <section className="max-w-7xl mx-auto px-6 md:px-20 pb-16">
-        <div className="pt-16 border-t border-black/10 dark:border-white/10 flex flex-wrap gap-8 items-center justify-center">
+      {/* 4. BOTTOM CTA */}
+      <section className="max-w-7xl mx-auto px-6 md:px-20 py-16">
+        <div className="pt-12 border-t border-black/10 flex flex-wrap gap-6 items-center justify-center">
           <Link 
             href="/about/staff" 
-            className="px-10 py-5 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all"
+            className="px-10 py-4 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded"
           >
             Meet Our Team
           </Link>
