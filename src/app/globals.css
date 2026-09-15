@@ -3,16 +3,22 @@
 
 @theme {
   --color-ubfsf-gold: #D4A017;
+  --color-ubfsf-mutedgold: #B98A2D;
+  --color-ubfsf-black: #111111;
+  --color-ubfsf-cream: #F7F4EE;
+  --color-ubfsf-charcoal: #2F2F2F;
+  --color-ubfsf-warmgrey: #E6E2DC;
   --color-ubfsf-zinc: #1A1A1A;
-  --font-sans: "Open Sans", ui-sans-serif, system-ui;
-  --font-serif: "Montserrat", ui-serif, Georgia;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui;
+  --font-serif: var(--font-cormorant), ui-serif, Georgia;
+  --font-heading: var(--font-spartan), ui-sans-serif, system-ui;
 }
 
 @layer base {
   /* LIGHT THEME (default) */
   :root {
-    --background: #ffffff;
-    --foreground: #09090b;
+    --background: #F7F4EE;
+    --foreground: #111111;
     --muted: #71717a;
     --border: #f1f1f1;
     --card-bg: #f9f9f9;
@@ -76,12 +82,12 @@
     color: var(--selection-text);
   }
 
-  /* All headings */
+  /* All headings — League Spartan, sentence case, editorial (per Brand Memorandum) */
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: -0.05em;
-    line-height: 0.9;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
     color: var(--foreground);
     transition: color 0.3s ease;
   }

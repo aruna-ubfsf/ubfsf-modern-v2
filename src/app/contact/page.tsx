@@ -56,16 +56,16 @@ export default function ContactPage() {
       {/* HERO SECTION */}
       <section className="relative bg-black text-white py-24 md:py-32 px-6 md:px-20 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FFB81C]/20 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#D4A017]/20 to-transparent"></div>
         </div>
         <div className="relative max-w-5xl mx-auto text-center">
-          <div className="inline-block bg-[#FFB81C] text-black px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
+          <div className="inline-block bg-[#D4A017] text-black px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] mb-8">
             Get in Touch
           </div>
           <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] mb-6 text-white">
-            Contact <span className="text-[#FFB81C]">Us</span>
+            Contact <span className="text-[#D4A017]">Us</span>
           </h1>
-          <div className="w-20 h-1 bg-[#FFB81C] mx-auto mb-8"></div>
+          <div className="w-20 h-1 bg-[#D4A017] mx-auto mb-8"></div>
           <p className="text-xl md:text-2xl text-stone-300 max-w-3xl mx-auto leading-relaxed font-light">
             We'd love to hear from you. Reach out with any questions, inquiries, or concerns.
           </p>
@@ -79,9 +79,9 @@ export default function ContactPage() {
           {/* LEFT COLUMN - Contact Info */}
           <div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-black dark:text-white tracking-tight">
-              Let's <span className="text-[#FFB81C]">Connect</span>
+              Let's <span className="text-[#D4A017]">Connect</span>
             </h2>
-            <div className="w-16 h-1 bg-[#FFB81C] mb-8"></div>
+            <div className="w-16 h-1 bg-[#D4A017] mb-8"></div>
             
             <p className="text-base text-stone-600 dark:text-stone-400 leading-relaxed mb-10">
               Thank you for taking the time to contact United Black Family Scholarship Foundation. 
@@ -92,8 +92,8 @@ export default function ContactPage() {
             {/* Contact Details */}
             <div className="space-y-6 p-8 bg-stone-50 dark:bg-[#2a2a2a] rounded-xl border border-stone-200 dark:border-stone-800 mb-10">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#FFB81C]/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[#FFB81C] text-lg">📍</span>
+                <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[#D4A017] text-lg">📍</span>
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">
@@ -107,8 +107,8 @@ export default function ContactPage() {
               </div>
               
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#FFB81C]/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[#FFB81C] text-lg">📧</span>
+                <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[#D4A017] text-lg">📧</span>
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">
@@ -116,7 +116,7 @@ export default function ContactPage() {
                   </p>
                   <a 
                     href="mailto:news@ubfsf.org" 
-                    className="text-sm text-stone-700 dark:text-stone-300 hover:text-[#FFB81C] transition-colors"
+                    className="text-sm text-stone-700 dark:text-stone-300 hover:text-[#D4A017] transition-colors"
                   >
                     news@ubfsf.org
                   </a>
@@ -124,8 +124,8 @@ export default function ContactPage() {
               </div>
               
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#FFB81C]/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[#FFB81C] text-lg">📞</span>
+                <div className="w-10 h-10 rounded-full bg-[#D4A017]/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[#D4A017] text-lg">📞</span>
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500">
@@ -133,7 +133,7 @@ export default function ContactPage() {
                   </p>
                   <a 
                     href="tel:+19189245872" 
-                    className="text-sm text-stone-700 dark:text-stone-300 hover:text-[#FFB81C] transition-colors"
+                    className="text-sm text-stone-700 dark:text-stone-300 hover:text-[#D4A017] transition-colors"
                   >
                     1-918-924-5872
                   </a>
@@ -143,7 +143,7 @@ export default function ContactPage() {
             
             {/* Social Media */}
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#FFB81C] mb-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#D4A017] mb-4">
                 Follow Us
               </h3>
               <div className="flex gap-4">
@@ -226,7 +226,7 @@ export default function ContactPage() {
                   <input
                     type="text"
                     name="name"
-                    className="w-full px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFB81C] focus:border-transparent transition text-black dark:text-white placeholder:text-stone-400"
+                    className="w-full px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A017] focus:border-transparent transition text-black dark:text-white placeholder:text-stone-400"
                     placeholder="John Doe"
                     required
                     disabled={isSubmitting}
@@ -239,7 +239,7 @@ export default function ContactPage() {
                   <input
                     type="email"
                     name="email"
-                    className="w-full px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFB81C] focus:border-transparent transition text-black dark:text-white placeholder:text-stone-400"
+                    className="w-full px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A017] focus:border-transparent transition text-black dark:text-white placeholder:text-stone-400"
                     placeholder="john@example.com"
                     required
                     disabled={isSubmitting}
@@ -252,7 +252,7 @@ export default function ContactPage() {
                   <textarea
                     name="message"
                     rows={5}
-                    className="w-full px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFB81C] focus:border-transparent transition text-black dark:text-white placeholder:text-stone-400 resize-none"
+                    className="w-full px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A017] focus:border-transparent transition text-black dark:text-white placeholder:text-stone-400 resize-none"
                     placeholder="Your message here..."
                     required
                     disabled={isSubmitting}
@@ -261,7 +261,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full px-8 py-4 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded-lg ${
+                  className={`w-full px-8 py-4 bg-[#D4A017] text-black text-xs font-black uppercase tracking-widest hover:bg-[#B98A2D] transition-all rounded-lg ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -276,7 +276,7 @@ export default function ContactPage() {
         <div className="mt-24 pt-16 border-t border-stone-200 dark:border-stone-800 flex flex-col md:flex-row gap-6 justify-between items-center">
           <div>
             <h3 className="text-2xl font-bold text-black dark:text-white">
-              Join Us in <span className="text-[#FFB81C]">Rebuilding</span> Community
+              Join Us in <span className="text-[#D4A017]">Rebuilding</span> Community
             </h3>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
               Together, we can create lasting change.
@@ -285,13 +285,13 @@ export default function ContactPage() {
           <div className="flex gap-4 flex-wrap">
             <Link 
               href="/programs" 
-              className="px-8 py-4 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded-lg"
+              className="px-8 py-4 bg-[#D4A017] text-black text-xs font-black uppercase tracking-widest hover:bg-[#B98A2D] transition-all rounded-lg"
             >
               Explore Programs
             </Link>
             <Link 
               href="/donate" 
-              className="px-8 py-4 border-2 border-[#FFB81C] text-[#FFB81C] hover:bg-[#FFB81C] hover:text-black transition-all rounded-lg font-black text-xs uppercase tracking-widest"
+              className="px-8 py-4 border-2 border-[#D4A017] text-[#D4A017] hover:bg-[#D4A017] hover:text-black transition-all rounded-lg font-black text-xs uppercase tracking-widest"
             >
               Donate Now
             </Link>

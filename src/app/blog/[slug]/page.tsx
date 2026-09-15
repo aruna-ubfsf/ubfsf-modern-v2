@@ -28,7 +28,7 @@ export default async function BlogPostPage({ params }: Props) {
   const author = authorMatch ? authorMatch[1].trim() : 'UBFSF Staff';
 
   return (
-    <main className="min-h-screen bg-white dark:bg-[#0a0a0a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif selection:bg-[#FFB81C]/30">
+    <main className="min-h-screen bg-white dark:bg-[#0a0a0a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif selection:bg-[#D4A017]/30">
       
       {/* HERO SECTION - Single Post */}
       <header className="relative h-[50vh] flex items-end pb-16 px-6 md:px-20 overflow-hidden border-b border-black/10 dark:border-white/10 bg-gradient-to-b from-stone-50 dark:from-[#141414] to-white dark:to-[#0a0a0a]">
@@ -49,7 +49,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="relative z-10 max-w-4xl mx-auto w-full">
           <Link 
             href="/blog" 
-            className="inline-block text-[10px] font-bold uppercase tracking-widest text-[#FFB81C] hover:underline mb-4"
+            className="inline-block text-[10px] font-bold uppercase tracking-widest text-[#D4A017] hover:underline mb-4"
           >
             ← Back to Newsroom
           </Link>
@@ -92,11 +92,11 @@ export default async function BlogPostPage({ params }: Props) {
           prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
           prose-p:text-stone-700 dark:prose-p:text-stone-200
           prose-p:leading-relaxed prose-p:mb-6
-          prose-a:text-[#FFB81C] prose-a:no-underline hover:prose-a:underline
+          prose-a:text-[#D4A017] prose-a:no-underline hover:prose-a:underline
           prose-strong:text-black dark:prose-strong:text-white prose-strong:font-bold
           prose-ul:text-stone-700 dark:prose-ul:text-stone-200
           prose-li:text-stone-700 dark:prose-li:text-stone-200 prose-li:mb-2
-          prose-blockquote:border-l-4 prose-blockquote:border-l-[#FFB81C] 
+          prose-blockquote:border-l-4 prose-blockquote:border-l-[#D4A017] 
           prose-blockquote:text-stone-600 dark:prose-blockquote:text-stone-300
           prose-blockquote:bg-stone-50 dark:prose-blockquote:bg-[#141414]
           prose-blockquote:p-6 prose-blockquote:rounded-lg prose-blockquote:my-8
@@ -118,7 +118,7 @@ export default async function BlogPostPage({ params }: Props) {
           [&_h4]:text-black dark:[&_h4]:text-white
           [&_blockquote_p]:text-stone-600 dark:[&_blockquote_p]:text-stone-300
           [&_blockquote_p]:italic
-          [&_a]:text-[#FFB81C] dark:[&_a]:text-[#FFB81C]
+          [&_a]:text-[#D4A017] dark:[&_a]:text-[#D4A017]
           [&_figcaption]:text-stone-500 dark:[&_figcaption]:text-stone-400
           [&_figcaption]:text-sm [&_figcaption]:text-center [&_figcaption]:mt-2
           [&_ul]:list-disc [&_ul]:pl-6
@@ -132,7 +132,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="max-w-4xl mx-auto pt-16 border-t border-black/10 dark:border-white/10 flex flex-wrap gap-8 items-center justify-center">
           <Link 
             href="/blog" 
-            className="px-10 py-5 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded"
+            className="px-10 py-5 bg-[#D4A017] text-black text-xs font-black uppercase tracking-widest hover:bg-[#B98A2D] transition-all rounded"
           >
             ← Back to Newsroom
           </Link>

@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: grant-ai-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-grantuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grantpass}
+      POSTGRES_DB: ${POSTGRES_DB:-grantdb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grantuser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: grant-ai-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: grant-ai-api
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-grantuser}:${POSTGRES_PASSWORD:-grantpass}@postgres:5432/${POSTGRES_DB:-grantdb}
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./packages/api:/app
+    command: npm run start:dev
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ai
+    container_name: grant-ai-ai
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-grantuser}:${POSTGRES_PASSWORD:-grantpass}@postgres:5432/${POSTGRES_DB:-grantdb}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./packages/ai-service:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    container_name: grant-ai-web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_AI_SERVICE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - ai-service
+    volumes:
+      - ./packages/web:/app
+    command: npm run dev
+
+volumes:
+  postgres_data:

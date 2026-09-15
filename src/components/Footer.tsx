@@ -1,29 +1,29 @@
+// src/components/Footer.tsx
 import Image from 'next/image';
-import Script from 'next/script';
 import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-white pt-20 pb-10 border-t border-zinc-200">
+    <footer className="bg-white dark:bg-[#1a1a1a] pt-20 pb-10 border-t border-stone-200 dark:border-white/10 transition-colors duration-300">
       <div className="max-w-6xl mx-auto px-6 md:px-20">
         
         {/* TOP DIVIDER LINE */}
         <div className="flex items-center gap-4 mb-16">
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 whitespace-nowrap font-sans">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-500 dark:text-stone-400 whitespace-nowrap font-sans">
             Join our Newsletter
           </span>
-          <div className="h-px w-full bg-zinc-200"></div>
+          <div className="h-px w-full bg-stone-200 dark:bg-white/10"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-start">
           
           {/* LEFT COLUMN: CONTACT & LOGO */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h2 className="text-xl font-black uppercase tracking-tighter text-black mb-6 font-sans">
+            <h2 className="text-xl font-black uppercase tracking-tighter text-black dark:text-white mb-6 font-sans">
               United Black Family <br /> Scholarship Foundation
             </h2>
             
-            <div className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-loose mb-10 font-sans">
+            <div className="text-stone-500 dark:text-stone-400 text-xs font-bold uppercase tracking-widest leading-loose mb-10 font-sans">
               <p>P.O. Box 862</p>
               <p>Bristow OK 74010</p>
               <p className="mt-2">Phone: 1-918-924-5872</p>
@@ -42,39 +42,39 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* MIDDLE COLUMN: MENU / QUICK LINKS - MATCHING NAVBAR STRUCTURE */}
+          {/* MIDDLE COLUMN: MENU / QUICK LINKS */}
           <div className="flex flex-col items-center md:items-start">
-            <h3 className="text-xs font-black uppercase tracking-widest text-[#FFB81C] mb-6 font-sans">
+            <h3 className="text-xs font-black uppercase tracking-widest text-[#D4A017] mb-6 font-sans">
               Quick Links
             </h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/" className="text-sm text-zinc-600 hover:text-black transition-colors duration-300 font-serif">
+                <Link href="/" className="text-sm text-stone-600 dark:text-stone-400 hover:text-[#D4A017] transition-colors duration-300 font-serif">
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-sm text-zinc-600 hover:text-black transition-colors duration-300 font-serif">
+                <Link href="/about" className="text-sm text-stone-600 dark:text-stone-400 hover:text-[#D4A017] transition-colors duration-300 font-serif">
                   About
                 </Link>
               </li>
               <li>
-                <Link href="/programs" className="text-sm text-zinc-600 hover:text-black transition-colors duration-300 font-serif">
+                <Link href="/programs" className="text-sm text-stone-600 dark:text-stone-400 hover:text-[#D4A017] transition-colors duration-300 font-serif">
                   Programs
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-sm text-zinc-600 hover:text-black transition-colors duration-300 font-serif">
+                <Link href="/blog" className="text-sm text-stone-600 dark:text-stone-400 hover:text-[#D4A017] transition-colors duration-300 font-serif">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-sm text-zinc-600 hover:text-black transition-colors duration-300 font-serif">
+                <Link href="/contact" className="text-sm text-stone-600 dark:text-stone-400 hover:text-[#D4A017] transition-colors duration-300 font-serif">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/donate" className="text-sm text-zinc-600 hover:text-black transition-colors duration-300 font-serif">
+                <Link href="/donate" className="text-sm text-stone-600 dark:text-stone-400 hover:text-[#D4A017] transition-colors duration-300 font-serif">
                   Donate
                 </Link>
               </li>
@@ -84,12 +84,8 @@ export default function Footer() {
           {/* RIGHT COLUMN: BEEHIIV EMBED */}
           <div className="flex flex-col items-center md:items-end">
             <div className="w-full max-w-[400px]">
-              <Script 
-                src="https://subscribe-forms.beehiiv.com/embed.js" 
-                strategy="afterInteractive" 
-              />
-              
-              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden shadow-sm">
+              {/* Remove Script - the iframe works without it */}
+              <div className="bg-white dark:bg-[#1a1a1a] rounded-lg border border-stone-200 dark:border-white/10 overflow-hidden shadow-sm">
                 <iframe 
                   src="https://subscribe-forms.beehiiv.com/04d12702-7399-421a-886b-8ba94f02ddc4" 
                   className="beehiiv-embed" 
@@ -115,7 +111,7 @@ export default function Footer() {
             href="https://www.facebook.com/unitedblack.familyscholarshipfoundation" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-zinc-400 hover:text-[#FFB81C] transition-colors duration-300"
+            className="text-stone-400 dark:text-stone-500 hover:text-[#D4A017] transition-colors duration-300"
             aria-label="Facebook"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -126,7 +122,7 @@ export default function Footer() {
             href="https://www.instagram.com/ubfsforg/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-zinc-400 hover:text-[#FFB81C] transition-colors duration-300"
+            className="text-stone-400 dark:text-stone-500 hover:text-[#D4A017] transition-colors duration-300"
             aria-label="Instagram"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -137,7 +133,7 @@ export default function Footer() {
             href="https://www.youtube.com/@unitedblackfamilyscholarsh4337" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-zinc-400 hover:text-[#FFB81C] transition-colors duration-300"
+            className="text-stone-400 dark:text-stone-500 hover:text-[#D4A017] transition-colors duration-300"
             aria-label="YouTube"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -148,7 +144,7 @@ export default function Footer() {
             href="https://www.linkedin.com/company/united-black-family-scholarship-foundation" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-zinc-400 hover:text-[#FFB81C] transition-colors duration-300"
+            className="text-stone-400 dark:text-stone-500 hover:text-[#D4A017] transition-colors duration-300"
             aria-label="LinkedIn"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -158,11 +154,11 @@ export default function Footer() {
         </div>
 
         {/* BOTTOM COPYRIGHT */}
-        <div className="pt-8 border-t border-zinc-200 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest font-sans">
+        <div className="pt-8 border-t border-stone-200 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-[9px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest font-sans">
             © {new Date().getFullYear()} United Black Family Scholarship Foundation | All Rights Reserved.
           </p>
-          <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest font-sans">
+          <p className="text-[9px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest font-sans">
             A 501(c)3 Non-Profit Organization
           </p>
         </div>

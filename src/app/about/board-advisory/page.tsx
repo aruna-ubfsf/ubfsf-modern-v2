@@ -8,7 +8,7 @@ export default async function BoardAdvisoryPage() {
   const members = page?.staff || [];
 
   return (
-    <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif selection:bg-[#FFB81C]/30">
+    <main className="min-h-screen bg-white dark:bg-[#1a1a1a] text-black dark:text-[#f4f4f4] transition-colors duration-300 font-serif selection:bg-[#D4A017]/30">
       <header className="relative h-[40vh] flex items-end pb-16 px-6 md:px-20 overflow-hidden border-b border-black/10 dark:border-white/10 bg-gradient-to-b from-stone-50 dark:from-stone-900 to-white dark:to-[#1a1a1a]">
         {page?.featuredImageUrl && (
           <div className="absolute inset-0 z-0">
@@ -25,11 +25,11 @@ export default async function BoardAdvisoryPage() {
         )}
 
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+          <span className="inline-block bg-[#D4A017] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
             Leadership
           </span>
           <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.85] mb-4">
-            Board of <span className="text-[#FFB81C]">Advisory</span>
+            Board of <span className="text-[#D4A017]">Advisory</span>
           </h1>
           <p className="text-lg md:text-xl text-stone-600 dark:text-stone-400 max-w-2xl font-light">
             Distinguished advisors guiding our mission and vision.
@@ -41,14 +41,14 @@ export default async function BoardAdvisoryPage() {
         <div className="max-w-5xl mx-auto">
           {!page ? (
             <div className="bg-stone-50 dark:bg-[#2a2a2a] p-8 rounded-2xl border border-black/5 dark:border-white/5 text-center">
-              <h2 className="text-xl font-bold mb-4 text-[#FFB81C]">Page Not Found</h2>
+              <h2 className="text-xl font-bold mb-4 text-[#D4A017]">Page Not Found</h2>
               <p className="text-stone-600 dark:text-stone-400">
                 The Board of Advisory page could not be found in WordPress.
               </p>
             </div>
           ) : members.length === 0 ? (
             <div className="bg-stone-50 dark:bg-[#2a2a2a] p-12 text-center rounded-2xl border border-black/5 dark:border-white/5">
-              <h2 className="text-xl font-bold mb-4 text-[#FFB81C]">No Advisory Members Found</h2>
+              <h2 className="text-xl font-bold mb-4 text-[#D4A017]">No Advisory Members Found</h2>
               <p className="text-stone-600 dark:text-stone-400">
                 Successfully found the WordPress page but could not extract member profiles.
               </p>
@@ -69,7 +69,7 @@ export default async function BoardAdvisoryPage() {
                     <div className="flex flex-col md:flex-row gap-8 p-8 md:p-10 items-center md:items-start">
                       <div className="w-full md:w-[200px] flex-shrink-0 flex justify-center">
                         {member.img ? (
-                          <div className="relative w-48 h-48 md:w-full md:aspect-square rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 border-2 border-[#FFB81C]/20 shadow-inner">
+                          <div className="relative w-48 h-48 md:w-full md:aspect-square rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 border-2 border-[#D4A017]/20 shadow-inner">
                             <Image
                               src={member.img}
                               alt={member.name}
@@ -80,8 +80,8 @@ export default async function BoardAdvisoryPage() {
                             />
                           </div>
                         ) : (
-                          <div className="w-48 h-48 md:w-full md:aspect-square rounded-2xl bg-gradient-to-br from-[#FFB81C]/20 to-[#FFB81C]/5 flex items-center justify-center border-2 border-dashed border-[#FFB81C]/30">
-                            <span className="text-6xl font-black text-[#FFB81C]">
+                          <div className="w-48 h-48 md:w-full md:aspect-square rounded-2xl bg-gradient-to-br from-[#D4A017]/20 to-[#D4A017]/5 flex items-center justify-center border-2 border-dashed border-[#D4A017]/30">
+                            <span className="text-6xl font-black text-[#D4A017]">
                               {member.name.charAt(0)}
                             </span>
                           </div>
@@ -94,7 +94,7 @@ export default async function BoardAdvisoryPage() {
                             {member.name}
                           </h3>
                           {member.role && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFB81C] bg-[#FFB81C]/10 border border-[#FFB81C]/30 px-3 py-1 rounded-full">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#D4A017] bg-[#D4A017]/10 border border-[#D4A017]/30 px-3 py-1 rounded-full">
                               {member.role}
                             </span>
                           )}
@@ -123,7 +123,7 @@ export default async function BoardAdvisoryPage() {
         <div className="pt-16 border-t border-black/10 dark:border-white/10 flex flex-wrap gap-8 items-center justify-center">
           <Link
             href="/about/staff"
-            className="px-10 py-5 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all rounded"
+            className="px-10 py-5 bg-[#D4A017] text-black text-xs font-black uppercase tracking-widest hover:bg-[#B98A2D] transition-all rounded"
           >
             Meet Our Staff
           </Link>

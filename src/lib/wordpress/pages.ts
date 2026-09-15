@@ -45,67 +45,99 @@ export interface HomePageACF {
   cta_button_contact?: string;
 }
 
-// Get page by slug using REST API
+// Get page by slug using REST API, with slug fallback handling for WordPress sites
+// that use legacy or alternate page slugs for the homepage.
 export async function getPageBySlug(slug: string) {
+  const slugCandidates = Array.from(new Set([
+    slug,
+    ...(slug === 'home' ? ['empower-communities-through-education-action-donate', 'ubfsf-home', 'home-page', 'front-page'] : []),
+  ]));
+
   try {
-    const res = await fetch(
-      `${API_URL}/wp-json/wp/v2/pages?slug=${slug}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
+    for (const candidate of slugCandidates) {
+      const res = await fetch(
+        `${API_URL}/wp-json/wp/v2/pages?slug=${encodeURIComponent(candidate)}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          next: { revalidate: 60 },
+        }
+      );
+
+      if (!res.ok) continue;
+
+      const pages = await res.json();
+      if (pages && pages.length > 0) {
+        const page = pages[0];
+        // Get featured image URL if available
+        let featuredImageUrl = null;
+        let featuredImageAlt = '';
+
+        if (page.featured_media) {
+          try {
+            const mediaRes = await fetch(
+              `${API_URL}/wp-json/wp/v2/media/${page.featured_media}`,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                next: { revalidate: 60 },
+              }
+            );
+            if (mediaRes.ok) {
+              const media = await mediaRes.json();
+              featuredImageUrl = media.source_url || media.media_details?.sizes?.full?.source_url || null;
+              featuredImageAlt = media.alt_text || '';
+            }
+          } catch (error) {
+            console.error('Error fetching featured image:', error);
+          }
+        }
+
+        return {
+          id: page.id,
+          title: page.title?.rendered || '',
+          content: page.content?.rendered || '',
+          slug: page.slug || '',
+          acf: page.acf || {},
+          featuredImageUrl: featuredImageUrl,
+          featuredImageAlt: featuredImageAlt,
+        };
       }
-    );
-
-    if (!res.ok) {
-      console.error('Failed to fetch page:', res.status);
-      return null;
     }
 
-    const pages = await res.json();
-    
-    if (!pages || pages.length === 0) {
-      console.log('Page not found:', slug);
-      return null;
-    }
-
-    const page = pages[0];
-    
-    // Get featured image URL if available
-    let featuredImageUrl = null;
-    let featuredImageAlt = '';
-    
-    if (page.featured_media) {
-      try {
-        const mediaRes = await fetch(
-          `${API_URL}/wp-json/wp/v2/media/${page.featured_media}`,
+    if (slug === 'home') {
+      const searchCandidates = ['UBFSF Home', 'UBFSF', 'Home', 'United Black Family Scholarship Foundation'];
+      for (const search of searchCandidates) {
+        const res = await fetch(
+          `${API_URL}/wp-json/wp/v2/pages?search=${encodeURIComponent(search)}`,
           {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            cache: 'no-store',
+            headers: { 'Content-Type': 'application/json' },
+            next: { revalidate: 60 },
           }
         );
-        if (mediaRes.ok) {
-          const media = await mediaRes.json();
-          featuredImageUrl = media.source_url || media.media_details?.sizes?.full?.source_url || null;
-          featuredImageAlt = media.alt_text || '';
+
+        if (!res.ok) continue;
+
+        const pages = await res.json();
+        if (pages && pages.length > 0) {
+          const page = pages[0];
+          return {
+            id: page.id,
+            title: page.title?.rendered || '',
+            content: page.content?.rendered || '',
+            slug: page.slug || '',
+            acf: page.acf || {},
+            featuredImageUrl: null,
+            featuredImageAlt: '',
+          };
         }
-      } catch (error) {
-        console.error('Error fetching featured image:', error);
       }
     }
-    
-    return {
-      id: page.id,
-      title: page.title?.rendered || '',
-      content: page.content?.rendered || '',
-      slug: page.slug || '',
-      acf: page.acf || {},
-      featuredImageUrl: featuredImageUrl,
-      featuredImageAlt: featuredImageAlt,
-    };
+
+    console.log('Page not found:', slug);
+    return null;
   } catch (error) {
     console.error('Error fetching page:', error);
     return null;
@@ -120,7 +152,7 @@ export async function getMediaUrl(mediaId: number): Promise<string> {
       `${API_URL}/wp-json/wp/v2/media/${mediaId}`,
       {
         headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
+        next: { revalidate: 60 },
       }
     );
     if (!res.ok) return '';
@@ -141,7 +173,7 @@ export async function getPageByTitle(title: string) {
         headers: {
           'Content-Type': 'application/json',
         },
-        cache: 'no-store',
+        next: { revalidate: 60 },
       }
     );
 
@@ -179,7 +211,7 @@ export async function getAllPages() {
         headers: {
           'Content-Type': 'application/json',
         },
-        cache: 'no-store',
+        next: { revalidate: 60 },
       }
     );
 

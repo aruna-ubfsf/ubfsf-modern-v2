@@ -11,7 +11,7 @@ export default function Hero() {
           United Black Family Scholarship Foundation — Established 2014
         </p>
         <div className="mt-12 flex justify-center gap-4">
-          <Link href="/donate" className="bg-ubfsf-gold text-black font-black px-10 py-5 uppercase text-xs tracking-widest hover:bg-yellow-500 transition-all shadow-xl active:scale-95">
+          <Link href="/donate" className="bg-ubfsf-gold text-black font-black px-10 py-5 uppercase text-xs tracking-widest hover:bg-[#B98A2D] transition-all shadow-xl active:scale-95">
             Donate Now
           </Link>
           <Link href="/programs" className="border-2 border-zinc-900 dark:border-white font-black px-10 py-5 uppercase text-xs tracking-widest hover:bg-zinc-900 hover:text-white transition-all">

@@ -7,3 +7,4 @@ export * from './staff';
 export * from './event';
 export * from './program';
 export * from './home';
+export * from './graphql-client';

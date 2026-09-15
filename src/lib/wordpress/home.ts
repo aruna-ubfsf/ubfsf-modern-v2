@@ -156,7 +156,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
         backgroundImage: donateBackgroundImage,
         logoImage: donateLogoImage,
         buttonText: acf.donate_button_text || 'Donate',
-        buttonUrl: acf.donate_button_url || 'http://bit.ly/1Dy14yX'
+        buttonUrl: acf.donate_button_url || 'https://secure.givelively.org/donate/united-black-family-scholarship-foundation'
       },
       founder: {
         title: acf.founder_title || 'A Word From Our Founder',
@@ -242,7 +242,7 @@ function getDefaultContent(): HomePageContent {
       backgroundImage: '',
       logoImage: '',
       buttonText: 'Donate',
-      buttonUrl: 'http://bit.ly/1Dy14yX'
+      buttonUrl: 'https://secure.givelively.org/donate/united-black-family-scholarship-foundation'
     },
     founder: {
       title: 'A Word From Our Founder',

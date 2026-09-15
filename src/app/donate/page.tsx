@@ -35,11 +35,11 @@ export default async function DonatePage() {
         )}
         
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          <span className="inline-block bg-[#FFB81C] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+          <span className="inline-block bg-[#D4A017] text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
             Support Our Mission
           </span>
           <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] mb-4">
-            Donate <span className="text-[#FFB81C]">Now</span>
+            Donate <span className="text-[#D4A017]">Now</span>
           </h1>
           <p className="text-lg md:text-xl text-stone-600 dark:text-stone-400 max-w-2xl font-light">
             Your generosity empowers underserved communities through education, opportunity, and lasting change.
@@ -117,7 +117,7 @@ export default async function DonatePage() {
 
           {/* Other Ways to Give */}
           <div className="mt-16 bg-black dark:bg-[#0a0a0a] text-white p-8 md:p-12 rounded-2xl">
-            <h2 className="text-2xl font-bold mb-6 text-[#FFB81C]">Other Ways to Give</h2>
+            <h2 className="text-2xl font-bold mb-6 text-[#D4A017]">Other Ways to Give</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold mb-2">Mail a Check</h3>
@@ -152,7 +152,7 @@ export default async function DonatePage() {
         <div className="max-w-4xl mx-auto mt-16 pt-16 border-t border-black/10 dark:border-white/10 flex flex-wrap gap-8 items-center justify-center">
           <Link 
             href="/contact" 
-            className="px-10 py-5 bg-[#FFB81C] text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-500 transition-all"
+            className="px-10 py-5 bg-[#D4A017] text-black text-xs font-black uppercase tracking-widest hover:bg-[#B98A2D] transition-all"
           >
             Contact Us
           </Link>

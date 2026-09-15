@@ -190,6 +190,12 @@ function cleanImageUrl(src: string): string {
   url = url.replace(/^https:\/\/i[0-9]\.wp\.com\//, "https://");
   url = url.replace(/\?.*$/, "");
   if (url.includes("UBFSF-logo") || url.includes("logo_clr")) return "";
+  // Reject browser-incompatible formats (HEIC/HEIF can't be rendered by
+  // Chrome/Firefox and can't be optimized by next/image + sharp)
+  if (/\.(heic|heif)(\?.*|$)/i.test(url)) {
+    console.warn(`Skipping non-web image format (HEIC/HEIF): ${url}`);
+    return "";
+  }
   if (url.startsWith("http")) return url;
   if (url.startsWith("/")) return `${API_URL}${url}`;
   return "";
@@ -289,7 +295,7 @@ export function parseStaffFromDivi(
       if (teamContainers.length > 0) continue;
 
       // Advanced / standard headings (most of the roster)
-      const headingBlocks = [
+      const headingBlocks: RegExpMatchArray[] = [
         ...col.matchAll(
           /<div[^>]*class="[^"]*(?:dg_adh_heading|et_pb_heading)[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi
         ),
@@ -297,7 +303,9 @@ export function parseStaffFromDivi(
 
       // Fallback: prefix span may exist even if outer div regex fails
       if (headingBlocks.length === 0 && /class="prefix">/i.test(col)) {
-        headingBlocks.push([col] as unknown as RegExpMatchArray);
+        // Create a minimal match array-like object with the full column as the match
+        const fallbackMatch = [col] as unknown as RegExpMatchArray;
+        headingBlocks.push(fallbackMatch);
       }
 
       for (const match of headingBlocks) {
@@ -350,7 +358,7 @@ export function parseStaffFromDivi(
 async function fetchPublicPageHtml(slug: string): Promise<string> {
   try {
     const res = await fetch(`${API_URL}/${slug}/`, {
-      headers: { Accept: "text/html", "User-Agent": "UBFSF-Next/1.0" },
+      headers: { Accept: "text/html" }, // no custom UA — ModSecurity 406s non-browser agents
       next: { revalidate: 3600 },
     });
     return res.ok ? await res.text() : "";
