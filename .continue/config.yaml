@@ -1,0 +1,151 @@
+# This is the Continue configuration file
+# For more details, see: https://docs.continue.dev/reference
+
+name: UBFSF Full Config
+version: 1.0.0
+schema: v1
+
+# Define models for all tasks
+# https://docs.continue.dev/customization/models
+models:
+  # ============================================================
+  # 1. DEEPSEEK - Official API (Primary Coding Model)
+  # ============================================================
+  - name: DeepSeek Coder V2
+    provider: openai
+    model: deepseek-coder-v2-lite-instruct
+    apiKey: ${{ secrets.DEEPSEEK_API_KEY }}
+    baseUrl: https://api.deepseek.com/v1
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 32768
+      maxTokens: 4096
+    capabilities:
+      - tool_use
+      - image_input
+
+  # ============================================================
+  # 2. OLLAMA - Local Models (Fast & Private)
+  # ============================================================
+  # 2a. Large local model for complex tasks
+  - name: Qwen
+    provider: Ollama
+    model: qwen2.5-coder:7b
+    apiBase: http://localhost:11434/v1
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 8192
+      maxTokens: 2048
+
+  # 2b. Small local model for autocomplete (fastest)
+  - name: DeepSeek Coder 1.3B (Ollama)
+    provider: ollama
+    model: deepseek-coder:1.3b
+    roles:
+      - autocomplete
+      - apply
+    defaultCompletionOptions:
+      contextLength: 4096
+      maxTokens: 256
+
+  # ============================================================
+  # 3. OPENAI - ChatGPT Models
+  # ============================================================
+  # 3a. GPT-4 for complex reasoning
+  - name: GPT-4
+    provider: openai
+    model: gpt-4-turbo
+    apiKey: ${{ secrets.OPENAI_API_KEY }}
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 128000
+      maxTokens: 4096
+    capabilities:
+      - tool_use
+      - image_input
+
+  # 3b. GPT-3.5 for quick tasks
+  - name: GPT-3.5 Turbo
+    provider: openai
+    model: gpt-3.5-turbo
+    apiKey: ${{ secrets.OPENAI_API_KEY }}
+    roles:
+      - chat
+      - autocomplete
+    defaultCompletionOptions:
+      contextLength: 16384
+      maxTokens: 2048
+
+  # ============================================================
+  # 4. GOOGLE - Gemini Models
+  # ============================================================
+  # 4a. Gemini Pro for general tasks
+  - name: Gemini Pro
+    provider: google
+    model: gemini-1.5-pro
+    apiKey: ${{ secrets.GOOGLE_API_KEY }}
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 2000000
+      maxTokens: 8192
+    capabilities:
+      - tool_use
+      - image_input
+
+  # 4b. Gemini Flash for fast responses
+  - name: Gemini Flash
+    provider: google
+    model: gemini-1.5-flash
+    apiKey: ${{ secrets.GOOGLE_API_KEY }}
+    roles:
+      - chat
+      - autocomplete
+    defaultCompletionOptions:
+      contextLength: 1000000
+      maxTokens: 4096
+
+  # ============================================================
+  # 5. ANTHROPIC - Claude (Optional - remove if not needed)
+  # ============================================================
+  - name: Claude 3.5 Sonnet
+    provider: anthropic
+    model: claude-3-5-sonnet-20241022
+    apiKey: ${{ secrets.ANTHROPIC_API_KEY }}
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 200000
+      maxTokens: 8192
+    capabilities:
+      - tool_use
+      - image_input
+
+# ============================================================
+# TAB AUTOCONFIGURATION
+# ============================================================
+tabAutocomplete:
+  enabled: true
+  model: DeepSeek Coder 1.3B (Ollama)  # Fastest for autocomplete
+  debounceMs: 50
+  maxPromptTokens: 1024
+
+# ============================================================
+# EXPERIMENTAL FEATURES
+# ============================================================
+experimental:
+  enableInlineCompletion: true
+  enableTerminalInlineCompletion: true
