@@ -22,7 +22,7 @@ export default async function DebugStaffRawHtmlPage() {
     adminLabel: content.match(/admin_label="([^"]+)"/g) || [],
     titlePrefix: content.match(/title_prefix="([^"]+)"/g) || [],
     titleSuffix: content.match(/title_suffix="([^"]+)"/g) || [],
-    imageSrc: content.match(/src="([^"]+)"/g) || [],
+
     etPbText: content.match(/et_pb_text[^\]]*\]([\s\S]*?)\[\/et_pb_text\]/g) || [],
   };
   
@@ -54,7 +54,7 @@ export default async function DebugStaffRawHtmlPage() {
         <div className="mb-8 border p-4 rounded bg-green-100">
           <h2 className="text-xl font-bold mb-4">✅ Team Members Found ({patterns.teamMember.length})</h2>
           <div className="space-y-2">
-            {patterns.teamMember.map((tm, i) => (
+            {patterns.teamMember.map((tm: string, i: number) => (
               <div key={i} className="border-b pb-2">
                 <pre className="text-sm whitespace-pre-wrap break-all">{tm}</pre>
               </div>
@@ -68,9 +68,10 @@ export default async function DebugStaffRawHtmlPage() {
         <div className="mb-8 border p-4 rounded bg-purple-100">
           <h2 className="text-xl font-bold mb-4">🏷️ Admin Labels ({patterns.adminLabel.length})</h2>
           <div className="flex flex-wrap gap-2">
-            {patterns.adminLabel.map((label, i) => {
+            {patterns.adminLabel.map((label: string, i: number) => {
               const name = label.replace('admin_label="', '').replace('"', '');
               return (
+
                 <span key={i} className="bg-white px-3 py-1 rounded text-sm border">
                   {name}
                 </span>
@@ -85,7 +86,7 @@ export default async function DebugStaffRawHtmlPage() {
         <div className="mb-8 border p-4 rounded bg-blue-100">
           <h2 className="text-xl font-bold mb-4">📝 Title Prefixes ({patterns.titlePrefix.length})</h2>
           <div className="flex flex-wrap gap-2">
-            {patterns.titlePrefix.map((prefix, i) => {
+            {patterns.titlePrefix.map((prefix: string, i: number) => {
               const name = prefix.replace('title_prefix="', '').replace('"', '');
               return (
                 <span key={i} className="bg-white px-3 py-1 rounded text-sm border">
