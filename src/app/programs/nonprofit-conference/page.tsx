@@ -10,7 +10,7 @@ function getDescription(renderedHtml: string): string {
     const $ = cheerio.load(renderedHtml);
     const firstPara = $('p').first().text().trim();
     if (firstPara) return firstPara.slice(0, 160);
-    const text = $.text().replace(/\s+/g, ' ').trim();
+    const text = $("body").text().replace(/\s+/g, ' ').trim();
     return text.slice(0, 160);
   }
   return '';

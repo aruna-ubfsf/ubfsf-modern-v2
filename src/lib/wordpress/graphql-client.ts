@@ -113,7 +113,7 @@ export async function getPageRenderedHtml(uri: string): Promise<string> {
     $('source, audio, video, iframe, embed, track').each((_, el) => {
       const $el = $(el);
       rewriteAttr($el, 'src');
-      if (el.tagName === 'video') {
+      if ($el.is('video')) {
         rewriteAttr($el, 'poster');
       }
       // ensure nested sources are also rewritten
