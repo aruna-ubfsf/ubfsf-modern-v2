@@ -1,10 +1,22 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
-const client = new OpenAI({
-  apiKey: process.env.NVIDIA_API_KEY,
-  baseURL: "https://integrate.api.nvidia.com/v1",
-});
+export const dynamic = "force-dynamic";
+
+function getClient() {
+  const apiKey = process.env.NVIDIA_API_KEY;
+  if (!apiKey) {
+    // Avoid throwing at build time; runtime will fail gracefully in handler
+    return new OpenAI({
+      apiKey: "dummy-key-for-build",
+      baseURL: "https://integrate.api.nvidia.com/v1",
+    });
+  }
+  return new OpenAI({
+    apiKey,
+    baseURL: "https://integrate.api.nvidia.com/v1",
+  });
+}
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
+    const client = getClient();
     const completion = await client.chat.completions.create({
       model: "openai/gpt-oss-20b",
       messages,
